@@ -14,13 +14,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick REQUIRED)
 
-set(APP_ICON_RESOURCE_WINDOWS "Slither2.ico")
+set(APP_ICON_RESOURCE_WINDOWS "icon.qrc")
 set(PROJECT_SOURCES
-        main.cpp
-        playground.cpp playground.h
-        snake.cpp snake.h
-        qml.qrc
-        ${APP_ICON_RESOURCE_WINDOWS}
+    ${APP_ICON_RESOURCE_WINDOWS}
+    assets.qrc
+    main.cpp
+    playground.cpp playground.h
+    qml.qrc
+    snake.cpp snake.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

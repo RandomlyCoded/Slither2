@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/assets">
+        <file>assets/IconChrismas.svg</file>
+        <file>assets/IconEaster.svg</file>
+        <file>assets/IconHalloween.svg</file>
+        <file>assets/IconSummer.svg</file>
+    </qresource>
+</RCC>

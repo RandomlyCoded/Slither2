@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>Slither2.ico</file>
+    </qresource>
+</RCC>
