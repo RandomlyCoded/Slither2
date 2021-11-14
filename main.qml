@@ -11,15 +11,21 @@ Window {
     property color speedColor: "#ff5555"
     property real fps: 30
     property real zoom: 16
+    property bool debugging: false
 
     width: 640
     height: 480
     visible: true
     visibility: Window.Maximized
 
+    flags: Qt.Sheet
+    onVisibleChanged: playground.initialize(0);
+
     Playground {
         id: playground
     }
+
+    // FIXME: es gibt jetzt auch m_snakes(von playground), das heißt, dass ich als nächstes gerne einen Repeater einbauen würde, der ALLE der Schlangen anzeigst
 
     Snake {
         id: snake
@@ -27,21 +33,35 @@ Window {
         destination: Qt.point((mouseArea.mouseX - playgroundView.center.x) / zoom,
                               (mouseArea.mouseY - playgroundView.center.y) / zoom)
 
-        speed: mouseArea.pressed && snake.canBoost ? 10 : 5
+        boosting: mouseArea.pressed && snake.canBoost
+
+        skin: ["#ff0000", "#ff7f00", "yellow", "limegreen", "cyan", "blue", "#6a006a"];
+        useBot: false
     }
 
     Rectangle {
         id: playgroundView
 
         readonly property point center: Qt.point(width/2, height/2)
+        property int i: 0
 
-        color: "gray"
+        color: playground.color(i)
+
+        NumberAnimation on i {
+            from: 0
+            to: 359
+            duration: 20000 // 200
+            loops: Animation.Infinite
+        }
+
         radius: playground.size * zoom
 
-        x: (main.width - width)/2
-        y: (main.height - height)/2
+        x: (main.width - width)/2   - (snake.position.x * zoom)
+        y: (main.height - height)/2 - (snake.position.y * zoom)
         width: radius * 2
         height: radius * 2
+
+        border.color: "red"
 
         MouseArea {
             id: mouseArea
@@ -49,11 +69,11 @@ Window {
             anchors.fill: parent
             hoverEnabled: true
 
-            onWheel: {
+            onWheel: (wheel) => {
                 if (wheel.angleDelta.y < 0 && zoom > 1)
-                    zoom /= 2;
+                    zoom -= 1;
                 else if (wheel.angleDelta.y > 0 && zoom < 32)
-                    zoom *= 2;
+                    zoom += 1;
             }
         }
 
@@ -80,73 +100,71 @@ Window {
         anchors.fill: playgroundView
 
         Repeater {
-            id: snakeView
+            model: playground.snakes
 
-            model: snake.segments
-
-            Rectangle {
-                id: segmentView
-
-                readonly property int index: model.index
-                readonly property point segment: modelData
-
-                x: playgroundView.center.x + segment.x * zoom - width/2
-                y: playgroundView.center.y + segment.y * zoom - height/2
-                z: snakeView.count - model.index
-
-                border { width: 1; color: "black" }
-
-                property int speeding: mouseArea.pressed
-                gradient: Gradient {
-                    GradientStop { position: 0; color: [["red", "#ff5555"], ["#ff7f00", "orange"], ["yellow", "#ffff66"], ["limegreen", "#55ff55"], ["cyan", "#00ffff"], ["blue", "#5555ff"], ["#6a006a", "#7f007f"]][model.index % 7][speeding]; }
-                    GradientStop { position: 0.9; color: [["red", "#ff5555"], ["#ff7f00", "orange"], ["yellow", "#ffff66"], ["limegreen", "#55ff55"], ["cyan", "#00ffff"], ["blue", "#5555ff"], ["#6a006a", "#7f007f"]][(model.index + 1) % 7][speeding]; }
-                }
-
-                color: [normalColor, speedColor][speeding]
-
-                property bool isLast: segmentView.index === snakeView.count - 1
-                Behavior on radius {
-                    animation: NumberAnimation {
-                        duration: 1000
-                        from: 0
-                        to: 0
-                    }
-                }
-//                onRadiusChanged: if(radius !== 16) console.info(index, radius)
-
-                radius: {
-                    let r = zoom;
-
-                    if (isLast) {
-                        r *= Math.min(1 + snake.load, 1);
-                    }
-
-
-                    return r;
-                }
-
-                width: radius * 2
-                height: radius * 2
-
-                Eyes {
-//                    rotation: Math.atan2(snake.direction.y, snake.direction.x)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    viewAngle: Math.atan2(snake.direction.y, snake.direction.x)
-                    radius: zoom/2
-                    visible: segmentView.index === 0
-                }
+            SnakeView {
+                id: snakeView
+                currentSnake: modelData
             }
         }
     }
 
+    Arrow {
+        position: playgroundView.center
+        direction: Qt.vector2d(mouseArea.mouseX, mouseArea.mouseY)
+    }
+
     Row {
+        spacing: 1
         Button {
             text: "Spawn"
+            font.pixelSize: 12
 
             onClicked: {
-                playground.initialize(0);
+                if(snake.isAlive) {
+                    playground.killSnake(snake)
+                    console.info("snake lived so kill it")
+                }
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
                 playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
+            }
+        }
+
+        Button {
+            text: "kill"
+            font.pixelSize: 12
+
+            onClicked: {
+                playground.killSnake(snake)
+            }
+        }
+
+        Button {
+            text: "use/unuse bot"
+            font.pixelSize: 12
+
+            onClicked: {
+                snake.changeBotUsing()
+                console.info("using bot:", snake.useBot)
+            }
+        }
+
+        Button {
+            text: "save game"
+            font.pixelSize: 12
+
+            onClicked: {
+                playground.save()
+                console.info("saved game")
+            }
+        }
+        Button {
+            text: "load game"
+            font.pixelSize: 12
+
+            onClicked: {
+                playground.load()
+                console.info("loaded game")
             }
         }
 
@@ -154,11 +172,11 @@ Window {
             checked: timer.running
             text: "Run"
 
-            onToggled: timer.running = !timer.running
+            onToggled: timer.running ^= true
         }
 
         Text {
-            text: "your lenght: " + snakeView.count
+            text: "your lenght: " + snake.lenght
         }
     }
 
@@ -175,12 +193,47 @@ Window {
             return new Date().getTime();
         }
 
+
         onTriggered: {
             let currentTick = now();
-            let dt = (currentTick - lastTick) / 1000;
+            let dt = (currentTick - lastTick/*get time passes*/) / 1000;
             lastTick = currentTick;
 
-            snake.move(dt);
+            playground.moveSnakes(dt);
         }
+    }
+
+    Item {
+        anchors.fill: parent
+        focus: true
+        onFocusChanged: !focus ? focus = true : 0
+        Keys.onPressed: (event) => {
+            if(event.key === Qt.Key_S) {
+                if(snake.isAlive)
+                                playground.killSnake(snake)
+                snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
+                playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
+                snake.changeBotUsing()
+            }
+            if(event.key === Qt.Key_K)
+                playground.killSnake(snake)
+            if(event.key === Qt.Key_B)
+                snake.changeBotUsing()
+            if(event.key === Qt.Key_F3 || event.key === Qt.Key_D)
+                debugging = !debugging
+            if(event.key === Qt.Key_R)
+                timer.running = !timer.running
+            if(event.key === Qt.Key_Save)
+                playground.save()
+        }
+    }
+
+    Minimap {
+        x: parent.width - width - 10
+        y: parent.height - height - 10
+    }
+
+    DebugScreen {
+        visible: debugging
     }
 }

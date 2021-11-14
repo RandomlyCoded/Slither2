@@ -18,10 +18,14 @@ set(APP_ICON_RESOURCE_WINDOWS "icon.qrc")
 set(PROJECT_SOURCES
     ${APP_ICON_RESOURCE_WINDOWS}
     assets.qrc
+    bot.cpp bot.h
+    leaderboard.cpp leaderboard.h
     main.cpp
+    pendants.qrc
     playground.cpp playground.h
     qml.qrc
     snake.cpp snake.h
+    playground_savestreams.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

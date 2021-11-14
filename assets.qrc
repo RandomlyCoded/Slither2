@@ -4,5 +4,6 @@
         <file>assets/IconEaster.svg</file>
         <file>assets/IconHalloween.svg</file>
         <file>assets/IconSummer.svg</file>
+        <file>assets/arrow.svg</file>
     </qresource>
 </RCC>

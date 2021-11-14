@@ -2,5 +2,9 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>Eyes.qml</file>
+        <file>SnakeView.qml</file>
+        <file>DebugScreen.qml</file>
+        <file>Arrow.qml</file>
+        <file>Minimap.qml</file>
     </qresource>
 </RCC>
