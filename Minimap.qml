@@ -3,10 +3,10 @@ import Slither 1.0
 
 Rectangle {
     id: minimap
-    property int r: 100
-    width: r * 2
+    property int r: 1
+    width: r * 2 * playground.size
     height: width
-    radius: r
+    radius: r * playground.size
 
     color: "#afafaf7f"
 
@@ -24,14 +24,12 @@ Rectangle {
 
     Repeater {
         model: playground.snakes
-        Rectangle {
-            width: radius * 2
-            height: radius * 2
-            radius: modelData.size + .5
-
+        Image {
+            source: ":/assets/assets/Minimap-icon.svg"
             x: modelData.position.x + minimap.width/2
             y: modelData.position.y + minimap.height/2
-            color: modelData.skinAt(0)
+            width: modelData.size + 100
+            height: modelData.size + 100
         }
     }
 }

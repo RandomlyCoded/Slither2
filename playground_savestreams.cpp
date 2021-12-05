@@ -40,7 +40,14 @@ void Playground::save()
 
 void Playground::load()
 {
-    QFile saveFile{"../../data/game.slgame", this};
+    load("../../data/game.slgame");
+}
+
+void Playground::load(QString filename)
+{
+    if(filename.isEmpty())
+        return;
+    QFile saveFile{filename, this};
 
     if(!saveFile.open(QFile::ReadOnly)) {
         qWarning() << saveFile.fileName() << ":" << saveFile.errorString();

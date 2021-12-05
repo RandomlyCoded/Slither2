@@ -1,14 +1,14 @@
 #ifndef SLITHER_PLAYGROUND_H
 #define SLITHER_PLAYGROUND_H
 
-#include <QDebug>
+#include "snake.h"
 
+#include <QDebug>
 #include <QAbstractListModel>
 #include <QColor>
 #include <QObject>
 #include <QPointF>
 #include <QTimer>
-#include "snake.h"
 
 namespace Slither {
 
@@ -45,7 +45,7 @@ public:
     void reset(QList<T> rows = {});
     void add(T rows = {});
     void remove(QModelIndex at);
-    T at(int index);
+    T &at(int index);
 
 public: // QAbstractItemModel interface
     int rowCount(const QModelIndex &parent = {}) const override;
@@ -58,9 +58,9 @@ protected:
 };
 
 template <class T>
-T DataListModel<T>::at(int index)
+T &DataListModel<T>::at(int index)
 {
-    return m_rows.at(index);
+    return m_rows[index];
 }
 template<class T>
 void DataListModel<T>::reset(QList<T> rows)
@@ -133,37 +133,42 @@ class Playground : public QObject
     Q_PROPERTY(int pearlAmount READ pearlAmount NOTIFY energyPearlsChanged FINAL)
     Q_PROPERTY(int totalSnakesSize READ totalSnakesSize NOTIFY totalSnakesSizeChanged FINAL)
 
+    Q_PROPERTY(bool masshacks READ masshacks NOTIFY masshacksChanged FINAL)
+
 public:
-    qreal size() const { return m_size; }
+    Playground(QObject *parent = nullptr);
+    qreal size() const noexcept { return m_size; }
     EnergyPearlListModel *energyPearls() const { return m_energyPearls; }
     QList<Snake*> snakes() { return m_snakes; };
 
-    void checkCrash(Snake *toCheck);
+    bool checkCrash(Snake *toCheck);
 
     int snakeCount() const { return m_snakes.count(); }
 
     int pearlAmount() const { return m_energyPearls->rowCount(); }
 
-    int totalSnakesSize() const
-    {
-        qreal amount = 0;
-        for(const auto sn: m_snakes)
-            amount += sn->lenght();
-        return amount;
-    }
+    int totalSnakesSize() const;
 
     constexpr const static qreal boostSpeed  = 10;
     constexpr const static qreal normalSpeed =  5;
     bool checkBounds(Snake *snake) const;
 
+    bool masshacks() const { return m_masshacksActive; }
+
 public slots:
+    void tp()
+    {
+        for(int i = i; i < m_energyPearls->rowCount(); i++)
+            m_energyPearls->at(i).position = QPointF(0, 0);
+    }
+    void switch_masshacks() { m_masshacksActive ^= 1; }
     void initialize(qreal size);
 
     bool checkBounds(QPointF position) const;
     qreal consumeNearbyPearls(QPointF position, const Snake *eater = nullptr);
 
-    void addSnake(Slither::Snake *snake);
-    void killSnake(Slither::Snake *snake);
+    void addSnake(Snake *snake);
+    void killSnake(Snake *snake);
     void spawnSnake();
 
     EnergyPearl spawnPearl() const;
@@ -174,6 +179,7 @@ public slots:
 
     void save();
     void load();
+    void load(QString filename);
 
     void moveSnakes(qreal dt);
 
@@ -184,13 +190,15 @@ public slots:
 
 signals:
     void sizeChanged(qreal size);
-    void snakesChanged(QList<Slither::Snake *> snakes);
+    void snakesChanged(QList<Snake *> snakes);
 
     void colorChanged();
 
     void energyPearlsChanged();
 
     void totalSnakesSizeChanged();
+
+    void masshacksChanged();
 
 private:
     QTimer *m_newSnakeTimer = new QTimer{this};
@@ -205,9 +213,9 @@ private:
     void energyBoost();
     int m_pearlAmount;
     int m_snakeCount;
-/*    void moveDeathSnakes();
-    QList<Snake*> m_deathSnakes = {};*/
+    bool m_masshacksActive = 0;
 };
+
 
 } // namespace Slither
 

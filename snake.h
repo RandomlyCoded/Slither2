@@ -1,19 +1,20 @@
 #ifndef SLITHER_SNAKE_H
 #define SLITHER_SNAKE_H
 
+#include "bot.h"
+#include "playground.h"
+
 #include <QColor>
 #include <QObject>
 #include <QPointF>
 #include <QTextStream>
 #include <QVector2D>
 #include <QDebug>
-
-#define GROW_INFINITE 0 // set it to 1 to grow unstoppable after reaching lenght 200.
+#include <QPointer>
 
 namespace Slither {
 
 class Playground;
-class Bot;
 
 class Snake : public QObject
 {
@@ -61,26 +62,19 @@ public:
     qreal load() const { return m_load; }
 
     void setPlayground(Playground *playground) { m_playground = playground; }
-    Playground *playground() const { return m_playground; }
+    Playground *playground() const { return m_playground.get(); }
+
+    bool useBot() const { return m_useBot; }
+    Bot *bot() const { return m_bot.get(); }
 
     void die();
 
     int size() const { return m_size; }
-
-    qreal lenght() const { return (m_lenght + m_load)
-        #if GROW_INFINITE
-                * m_size
-        #endif
-                ; }
-
+    qreal lenght() const { return (m_lenght + m_load); }
     QString lenghtInfo() const;
-
-    Bot *bot() const { return m_bot; }
-    bool useBot() const { return m_useBot; }
 
     bool isAlive() const { return m_isAlive; }
 
-    const QList<QColor> &skin() const { return m_skin; }
 
     Snake &operator=(Snake &other) {
         Snake &sn(other);
@@ -88,6 +82,7 @@ public:
     }
     QString positionInfo();
 
+    const QList<QColor> &skin() const { return m_skin; }
     void setSkin(const QList<QColor> &newSkin)
     {
         if (m_skin == newSkin)
@@ -107,6 +102,18 @@ public:
 
     QPointF lastSegment() const { return m_segments.last(); }
 
+    QString name() { return "Snake#kp"; }
+
+    enum class BotType : unsigned char
+    {
+        StupidBot      = 0,
+        EatingBot      = 1,
+        KillingBot     = 2,
+        FollowMouseBot = 3,
+    };
+
+    Q_DECLARE_FLAGS(BotTypes, BotType)
+
 public slots:
     void spawn(QPointF position, QPointF destination);
     void move(qreal dt);
@@ -121,7 +128,10 @@ public slots:
     QColor skinAt(int index) { return m_skin[index % m_skin.length()]; }
     QColor skinLast() { return m_skin.last(); }
 
+    void setBotType(BotType type);
+
 signals:
+    void died();
     void segmentsChanged(QList<QPointF> segments);
     void destinationChanged(QPointF destination);
     void positionChanged();
@@ -144,7 +154,7 @@ signals:
     void lastSegmentChanged();
 
 private:
-    Bot *m_bot;
+    QPointer<Slither::Bot> m_bot;
     int m_size;
     bool m_isAlive = true;
     QColor m_color;
@@ -152,7 +162,7 @@ private:
 /*    int loadCounter = 1;
     int snakeSize = m_segments.count() / loadCounter;*/
 
-    Playground *m_playground;
+    QPointer<Slither::Playground> m_playground;
     QList<QPointF> m_segments = {};
     QPointF m_destination;
 

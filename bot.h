@@ -1,58 +1,44 @@
+#ifndef SLITHER_BOT_BASE_H
+#define SLITHER_BOT_BASE_H
+
 #ifndef SLITHER_BOT_H
 #define SLITHER_BOT_H
 
 #include <QRandomGenerator>
 #include <QPointF>
+#include <QObject>
 
-//#include "snake.h"
-#include "playground.h"
+#define MOVING_FUNCS private
 
 namespace Slither {
 
 class Snake;
+class Playground;
 
-class Bot
+namespace {
+
+bool is_inrange(qreal dist, qreal value, qreal range);
+
+}
+
+class Bot : public QObject
 {
+    void remove();
+
 public:
+    ~Bot() { }
     Bot(Snake *controlled);
 
-    enum ControlFlags {
-        circelingSnake,
-        intelligent,
-        killSnake,
-        mediumIntelligence,
-        saving,
-        stupid,
-        tryEat,
-    };
+    virtual void act(qreal duration) = 0;
 
-    enum Types {
-        energyPearl,
-        snake,
-    };
-
-    void act(qreal duration, ControlFlags moveType = mediumIntelligence);
-
-    void moveSnakeTo(QPointF position);
-    void moveSnakeTo(Snake *position);
-    void circle(Snake *snake);
-    void circle();
-
-private:
-    QRandomGenerator *rng = new QRandomGenerator;
-
-    void findNext(Types type);
+protected:
+    Playground *playground() const;
+    const QPointF position() const;
     Snake *m_snake;
-
-    Snake *nextSnake;
-    QPointF nextEnergy;
-
-    double m_r;
-    QList<QPointF> m_circlePoints;
-
-    void getCircle(QPointF position);
 };
 
 } // namespace Slither
 
 #endif // SLITHER_BOT_H
+
+#endif // SLITHER_BOT_BASE_H

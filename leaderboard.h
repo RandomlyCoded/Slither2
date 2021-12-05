@@ -13,23 +13,41 @@ class Leaderboard : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QList<Snake*> leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
+    Q_PROPERTY(QList<Data> leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
+    Q_PROPERTY(Slither::Playground *playground MEMBER m_playground WRITE setPlayground FINAL)
 
 public:
+    struct Data;
+
     Leaderboard(QObject *parent = nullptr);
     Leaderboard(QList<Snake*> snakes);
 
-    const QList<Snake *> &leaderboard() const { return m_leaderSnakes; }
+    const QList<Data> &leaderboard() const { return m_leaderSnakes; }
+
+    void setPlayground(Slither::Playground *newPlayground) { m_playground = newPlayground; }
 
 signals:
     void leaderboardChanged();
 
 private:
     QList<Snake*> m_possibleSnakes;
-    QList<Snake*> m_leaderSnakes;
+    QList<Data> m_leaderSnakes;
 
     void init();
     void setLeaderSnakes();
+    QPointer<Slither::Playground> m_playground;
+};
+
+struct Leaderboard::Data
+{
+    int size;
+    int index;
+    QString name;
+
+    Q_GADGET
+    Q_PROPERTY(int size MEMBER size CONSTANT FINAL)
+    Q_PROPERTY(int index MEMBER index CONSTANT FINAL)
+    Q_PROPERTY(QString snakeName MEMBER name CONSTANT FINAL)
 };
 
 } // namespace Slither

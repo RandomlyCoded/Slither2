@@ -1,12 +1,16 @@
 #include "snake.h"
 
 #include "playground.h"
-#include "bot.h"
+#include "Bots"
 
 #include <QDebug>
 #include <QVector2D>
 #include <QRandomGenerator>
 //#include <QtMultimedia/QMediaPlayer>
+
+#ifdef QT_DEBUG
+#define START_AT_SIZE    0 // starting as a bigger snake. ONLY AVAILABLE IN DEBUG MODE
+#endif
 
 #define MASSHACKS_ACTIVE 0 // set it to 1 for activating mass hacks; then you will grow every time you move. Bots are also growing.
 
@@ -39,6 +43,27 @@ void Snake::setSize(int size)
     emit sizeChanged(m_size);
 }
 
+void Snake::setBotType(BotType type)
+{
+    delete m_bot;
+    switch(type) {
+    case Slither::Snake::BotType::StupidBot:
+        m_bot = new StupidBot(this);
+        break;
+    case Slither::Snake::BotType::EatingBot:
+        m_bot = new EatingBot(this);
+        break;
+    case Slither::Snake::BotType::KillingBot:
+        m_bot = new KillingBot(this);
+        break;
+    case Slither::Snake::BotType::FollowMouseBot:
+        m_bot = new FollowMouseBot(this);
+        break;
+    default:
+        m_bot = new StupidBot(this);
+    }
+}
+
 QString Snake::positionInfo()
 {
     int _X = position().x() * 1000;
@@ -56,9 +81,10 @@ QString Snake::positionInfo()
 
 Snake::Snake(QObject *parent)
     : QObject{parent}
-    , m_bot(new Bot{this})
+    , m_bot(new KillingBot{this})
     , m_size(1)
     , m_isAlive(false)
+    , m_segments({QPointF(0, 0)})
 {
     connect(this, &Snake::destinationChanged, this, &Snake::directionChanged);
     connect(this, &Snake::positionChanged, this, &Snake::directionChanged);
@@ -90,11 +116,9 @@ Snake::Snake(Snake &other)
 void Snake::die()
 {
     const auto rng = QRandomGenerator::global();
-    for(const auto seg: m_segments) {
-        int index = m_segments.indexOf(seg);
-        if(index < 0)
-            continue;
-        QColor clr = skinAt(index);
+    for(int i = 0; i < m_segments.count(); i += m_size) {
+        const QPointF &seg = m_segments[i];
+        QColor clr = skinAt(i);
         qreal r = clr.red()   + rng->generateDouble(); if(r > 255.) r = 255;
         qreal g = clr.blue()  + rng->generateDouble(); if(g > 255.) g = 255.;
         qreal b = clr.green() + rng->generateDouble(); if(b > 255.) b = 255.;
@@ -112,10 +136,12 @@ void Snake::die()
     }
 
     m_isAlive = false;
+    emit isAliveChanged();
     emit destinationChanged(m_destination);
     emit positionChanged();
 
     playDieSound();
+    emit died();
 }
 
 QString Snake::lenghtInfo() const
@@ -133,14 +159,19 @@ QString Snake::lenghtInfo() const
 
 void Snake::spawn(QPointF position, QPointF destination)
 {
+    m_segments = {};
     m_size = 1;
     m_isAlive = true;
-    const auto dp = direction();
+//    const auto dp = direction();
     m_destination = destination;
     m_segments.clear();
 
-    for (int i = 0; i < 5; ++i)
-        m_segments.append(position - (dp * i).toPointF());
+    for (int i = 0; i < 5
+     #if START_AT_SIZE
+         + 400
+     #endif
+         ; ++i)
+        m_segments.append(/*position - (dp * i).toPointF()*/position - destination);
 
     m_lenght = m_segments.count();
     emit destinationChanged(m_destination);
@@ -148,6 +179,8 @@ void Snake::spawn(QPointF position, QPointF destination)
 
     emit segmentsChanged(m_segments);
     emit lenghtChanged();
+
+    emit isAliveChanged();
 }
 
 void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen verwenden
@@ -181,10 +214,6 @@ void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen ve
             emit lenghtChanged();
         }
     }
-
-#if MASSHACKS_ACTIVE
-    m_load += m_size; // mass hack
-#endif
 
     const auto motion = dp * speed() * dt;
     m_segments[0] += motion.toPointF()/* * angle*/;

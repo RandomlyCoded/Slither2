@@ -68,12 +68,13 @@ Item {
         }
     }*/
 
+
     Shape {
+        antialiasing: true
         width: parent.width
         height: parent.height
         ShapePath {
-            strokeWidth: currentSnake.size * zoom
-            strokeColor: "black"
+            strokeWidth: currentSnake.size * zoom * 2
             fillColor: "transparent"
 
             startX: currentSnake.position.x * zoom
@@ -86,30 +87,30 @@ Item {
 
     Rectangle {
         id: head
-        x: currentSnake.position.x * zoom - radius
-        y: currentSnake.position.y * zoom - radius
+        x: currentSnake.position.x * zoom - radius/2
+        y: currentSnake.position.y * zoom - radius/2
         z: 2
-        width: currentSnake.size * zoom
+        width: currentSnake.size * zoom * 2
         height: width
-        radius: height/2
+        radius: height
         color: currentSnake.skinAt(0)
 
         Eyes {
             id: eyes
             anchors.horizontalCenter: parent.horizontalCenter
-            viewAngle: Math.atan2(snake.direction.y, snake.direction.x)
-            radius: (zoom/2 * currentSnake.size)/2
+            viewAngle: Math.atan2(currentSnake.direction.y, currentSnake.direction.x)
+            radius: zoom/2 * currentSnake.size
         }
     }
 
     Rectangle {
         id: end
-        x: currentSnake.lastSegment.x * zoom - radius
-        y: currentSnake.lastSegment.y * zoom - radius
+        x: currentSnake.lastSegment.x * zoom - radius/2
+        y: currentSnake.lastSegment.y * zoom - radius/2
         z: 1
-        width: currentSnake.size * zoom
+        width: currentSnake.size * zoom * 2
         height: width
-        radius: height/2
+        radius: height
         color: currentSnake.skinLast()
     }
 }

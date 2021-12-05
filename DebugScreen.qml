@@ -21,7 +21,7 @@ Rectangle {
 
         Text {
             id: playgroundSizeInfo
-            text: "size of playground: " + playground.size
+            text: "size of Playground: " + playground.size
         }
 
         Text {
@@ -31,7 +31,7 @@ Rectangle {
 
         Text {
             id: colorInfo
-            text: "playground color: " + playgroundView.color
+            text: "Playground color: " + playgroundView.color
         }
 
         Text {

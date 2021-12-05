@@ -7,6 +7,7 @@
 #include <QVector2D>
 #include <QDebug>
 #include <QFile>
+#include <QVector2D>
 
 namespace Slither {
 
@@ -14,20 +15,33 @@ namespace {
 
 }
 
-void Playground::checkCrash(Snake *toCheck)
+Playground::Playground(QObject *parent)
+    : QObject(parent)
+{ initialize(0); }
+
+bool Playground::checkCrash(Snake *toCheck)
 {
     for(const auto check: m_snakes) {
         if(check == toCheck)
             continue;
 
         for(const auto checkedTile: check->segments()) {
-            if(toCheck->position() == checkedTile) {
+            if(QVector2D(toCheck->position()).distanceToPoint(QVector2D(checkedTile)) < (toCheck->size() + check->size())) {
                 qInfo("YOU CHRASHED");
                 killSnake(toCheck);
-                return;
+                return true;
             }
         }
     }
+    return false;
+}
+
+int Playground::totalSnakesSize() const
+{
+    qreal amount = 0;
+    for(const auto sn: m_snakes)
+        amount += sn->lenght();
+    return amount;
 }
 
 void Playground::initialize(qreal size)
@@ -63,8 +77,8 @@ void Playground::initialize(qreal size)
 
     // starting timer for new Snakes
     connect(m_newSnakeTimer, &QTimer::timeout, this, &Playground::spawnSnake);
-    m_newSnakeTimer->setInterval(10000); // oder immer wenn eine Stirbt spawnt eine neue? dann müssten wir aber hier einen for-loop einbauen
-//    m_newSnakeTimer->start();
+    m_newSnakeTimer->setInterval(1000); // oder immer wenn eine Stirbt spawnt eine neue? dann müssten wir aber hier einen for-loop einbauen
+    m_newSnakeTimer->start();
 
     // starting timer for new Energy Pearls
     connect(m_energyTimer, &QTimer::timeout, this, &Playground::energyBoost);
@@ -80,15 +94,12 @@ void Playground::initialize(qreal size)
 
 bool Playground::checkBounds(QPointF position) const
 {
-    auto vector = QVector2D(position);
-    return vector.length() < m_size;
+// BUG: FIXME: nach Ende dieser Zeile erhält Slither2 ein SIGSEGV
+    return QVector2D(position).length() < m_size;
 }
 
 bool Playground::checkBounds(Snake *snake) const
-{
-    auto vector = QVector2D(snake->position());
-    return (vector.length() + snake->size()) < m_size;
-}
+{ return checkBounds(snake->position()); }
 
 qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
 {
@@ -112,43 +123,58 @@ qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
         m_energyPearls->remove(index);
     }
 
-    if(hadToAddSnake)
-        delete eater;
     if(amount)
         emit energyPearlsChanged();
-    return amount;
+    if(m_masshacksActive)
+        amount += eater->boosting() ? 0.6 * eater->size() : 0.2 * eater->size();
+    if(hadToAddSnake)
+        delete eater;
+    return amount * (m_masshacksActive ? 2 : 1);
 }
 
 void Playground::addSnake(Snake *snake)
 {
-    if (snake)
-        snake->setPlayground(this);
+    if (!snake)
+        return;
+    snake->setPlayground(this);
     m_snakes.append(snake);
     connect(snake, &Snake::sizeChanged, this, &Playground::totalSnakesSizeChanged);
     emit snakesChanged(m_snakes);
-    qInfo() << m_snakes.count();
 }
 
 void Playground::killSnake(Snake *snake)
 {
+    if(!snake)
+        return;
+    if(!snake->isAlive())
+        return;
     const int killedSnake = m_snakes.indexOf(snake);
     m_snakes.removeAt(killedSnake);
     snake->die();
     disconnect(snake, &Snake::sizeChanged, this, &Playground::totalSnakesSizeChanged);
-//    m_deathSnakes.append(snake);
     emit snakesChanged(m_snakes);
 }
 
+namespace {
+
+QPointF get(const Playground *pg)
+{
+    auto rng = QRandomGenerator::global();
+    const auto r = pg->size() * pow(rng->generateDouble(), .5) * .25;
+    const auto phi = 2 * M_PI * rng->generateDouble();
+    return QPointF{r * cos(phi), r * sin(phi)};
+}
+
+}
 void Playground::spawnSnake()
 {
-    if(m_snakes.length() >= 3)
+    if(m_snakes.length() >= 10)
         return;
 
-    qInfo("adding Snake...");
-    addSnake(new Snake);
-    m_snakes.last()->spawn({0, 0}, {1, 1});
+    Snake *sn = new Snake(this);
+    addSnake(sn);
+    m_snakes.last()->spawn(get(this), get(this));
     emit snakesChanged(m_snakes);
-    qInfo() << "SIZE OF \"m_snakes\":" << m_snakes.count();
 }
 
 EnergyPearl Playground::spawnPearl() const
@@ -156,7 +182,7 @@ EnergyPearl Playground::spawnPearl() const
     const auto rng = QRandomGenerator::global();
 
     // use polar coordinates to evenly place the pearls
-    const auto r = m_size * pow(rng->generateDouble(), 1);
+    const auto r = m_size * pow(rng->generateDouble(), .5);
     const auto phi = 2 * M_PI * rng->generateDouble();
 
     // create pearl of random color, amount and position
@@ -209,13 +235,17 @@ void Playground::moveSnakes(qreal dt)
             killSnake(sn);
             continue;
         }
-        if(sn->useBot())
-            sn->bot()->act(dt);
+        if(sn->useBot()) {
+            auto b = sn->bot();
+            if(!b)
+                continue;
+            b->act(dt);
+        }
         sn->move(dt);
+//        checkCrash(sn);
     }
-
-//    moveDeathSnakes();
 }
+
 /*
 void Playground::moveDeathSnakes()
 {

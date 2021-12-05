@@ -1,0 +1,6 @@
+#include "bot.h" // base bot
+
+#include "eating_bot.h"      // bot, always tries to eat
+#include "followmouse_bot.h" // bot, alwys follows the mouse; this is a value bot
+#include "killing_bot.h"     // bot, always tries to kill
+#include "stupid_bot.h"      // stupid bot

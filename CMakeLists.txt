@@ -14,11 +14,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick REQUIRED)
 
-set(APP_ICON_RESOURCE_WINDOWS "icon.qrc")
+add_library(Botdefs STATIC)
+target_link_libraries(Botdefs
+    PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
+target_sources(
+    Botdefs PRIVATE
+    Bots
+    bot.h bot.cpp
+    eating_bot.h eating_bot.cpp
+    followmouse_bot.h followmouse_bot.cpp
+    killing_bot.h killing_bot.cpp
+    stupid_bot.h stupid_bot.cpp
+)
 set(PROJECT_SOURCES
-    ${APP_ICON_RESOURCE_WINDOWS}
     assets.qrc
-    bot.cpp bot.h
     leaderboard.cpp leaderboard.h
     main.cpp
     pendants.qrc
@@ -29,7 +38,7 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(Slither2
+    qt_add_executable(Slither2 WIN32
         ${PROJECT_SOURCES}
     )
 else()
@@ -47,4 +56,5 @@ endif()
 target_compile_definitions(Slither2
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(Slither2
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
+  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick
+  Botdefs)

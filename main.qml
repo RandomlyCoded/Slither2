@@ -7,6 +7,7 @@ import Slither 1.0
 Window {
     id: main
 
+    color: Qt.color("#9e0000")
     property color normalColor: "red"
     property color speedColor: "#ff5555"
     property real fps: 30
@@ -19,13 +20,11 @@ Window {
     visibility: Window.Maximized
 
     flags: Qt.Sheet
-    onVisibleChanged: playground.initialize(0);
+    onVisibleChanged: { playground.initialize(0); playground.load(APP.startmap); }
 
     Playground {
         id: playground
     }
-
-    // FIXME: es gibt jetzt auch m_snakes(von playground), das heißt, dass ich als nächstes gerne einen Repeater einbauen würde, der ALLE der Schlangen anzeigst
 
     Snake {
         id: snake
@@ -123,10 +122,11 @@ Window {
             onClicked: {
                 if(snake.isAlive) {
                     playground.killSnake(snake)
-                    console.info("snake lived so kill it")
+                    console.info("snake lived so killed it")
                 }
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
                 playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
+                snake.setBotType(Snake.FollowMouse)
             }
         }
 
@@ -140,16 +140,6 @@ Window {
         }
 
         Button {
-            text: "use/unuse bot"
-            font.pixelSize: 12
-
-            onClicked: {
-                snake.changeBotUsing()
-                console.info("using bot:", snake.useBot)
-            }
-        }
-
-        Button {
             text: "save game"
             font.pixelSize: 12
 
@@ -158,6 +148,7 @@ Window {
                 console.info("saved game")
             }
         }
+
         Button {
             text: "load game"
             font.pixelSize: 12
@@ -170,13 +161,33 @@ Window {
 
         CheckBox {
             checked: timer.running
-            text: "Run"
+            text: "<- Run\t"
 
             onToggled: timer.running ^= true
         }
 
+        CheckBox {
+            checked: snake.useBot
+            text: "<- use bot\t"
+
+            onToggled: snake.changeBotUsing()
+        }
+
+        CheckBox {
+            checked: playground.masshacks
+            text: "<- masshacks active\t"
+
+            onToggled: playground.switch_masshacks()
+        }
+
+        CheckBox {
+            checked: playground.checkChrash
+            text: "<- check chrash\t"
+            onToggled: playground.checkChrash ^= 1
+        }
+
         Text {
-            text: "your lenght: " + snake.lenght
+            text: "your lenght: <b>" + snake.lenght + "</b>"
         }
     }
 
@@ -208,29 +219,81 @@ Window {
         focus: true
         onFocusChanged: !focus ? focus = true : 0
         Keys.onPressed: (event) => {
-            if(event.key === Qt.Key_S) {
+            switch(event.key) {
+            case Qt.Key_S: {
                 if(snake.isAlive)
                                 playground.killSnake(snake)
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
                 playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
                 snake.changeBotUsing()
-            }
-            if(event.key === Qt.Key_K)
+            } break;
+
+            case Qt.Key_K: {
                 playground.killSnake(snake)
-            if(event.key === Qt.Key_B)
+            } break;
+            case Qt.Key_B: {
                 snake.changeBotUsing()
-            if(event.key === Qt.Key_F3 || event.key === Qt.Key_D)
+            } break;
+            case Qt.Key_F3:
+            case Qt.Key_D: {
                 debugging = !debugging
-            if(event.key === Qt.Key_R)
+            } break;
+            case Qt.Key_R: {
                 timer.running = !timer.running
-            if(event.key === Qt.Key_Save)
+            } break;
+            case Qt.Key_Save: {
                 playground.save()
+            } break;
+            case Qt.Key_F11: {
+                console.info("F11")
+                if(main.visibility === Window.Maximized) {
+                    main.visibility = Window.Windowed
+                    console.info("windowing")
+                }
+                else {
+                    main.visibility = Window.Maximized
+                    console.info("maximizing")
+                }
+            } break;
+            case Qt.Key_N: {
+                console.info("nggyu ._.")
+            } break;
+            case Qt.Key_M: {
+                playground.switch_masshacks();
+            } break;
+            } // switch
         }
     }
 
     Minimap {
         x: parent.width - width - 10
         y: parent.height - height - 10
+    }
+
+    Rectangle {
+        width: playgroundView.width
+        height: playgroundView.height
+        radius: playgroundView.radius
+        x: playgroundView.x
+        y: playgroundView.y
+        color: "transparent"
+        border.color: "#ff0000"
+    }
+
+    Column {
+        spacing: 1
+        Repeater {
+            model: Leaderboard.leaderboard
+            Row {
+                spacing: 5
+                Text {
+                    text: "#" + (modelData.index + 1) + (modelData.index === 10 ? " " : "  ") + modelData.name
+                }
+                Text {
+                    text: modelData.size
+                }
+            }
+        }
     }
 
     DebugScreen {

@@ -5,5 +5,6 @@
         <file>assets/IconHalloween.svg</file>
         <file>assets/IconSummer.svg</file>
         <file>assets/arrow.svg</file>
+        <file>assets/Minimap-icon.svg</file>
     </qresource>
 </RCC>
