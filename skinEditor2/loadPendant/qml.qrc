@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Chooser.qml</file>
+        <file>List.qml</file>
+    </qresource>
+</RCC>

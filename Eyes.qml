@@ -6,7 +6,7 @@ Item {
     property real viewAngle: 0
     property real radius: 10
 
-    rotation: viewAngle * 24
+    rotation: viewAngle * 180/Math.PI + 90
 
     Row {
         spacing: radius/4
@@ -26,8 +26,8 @@ Item {
                     radius: eyes.radius/2
                     width: radius * 2
                     height: radius * 2
-                    x: radius + radius * Math.cos(viewAngle)
-                    y: radius + radius * Math.sin(viewAngle)
+                    x: radius
+                    y: radius/2
                 }
             }
         }

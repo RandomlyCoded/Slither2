@@ -81,7 +81,7 @@ QString Snake::positionInfo()
 
 Snake::Snake(QObject *parent)
     : QObject{parent}
-    , m_bot(new KillingBot{this})
+    , m_bot(new StupidBot{this})
     , m_size(1)
     , m_isAlive(false)
     , m_segments({QPointF(0, 0)})

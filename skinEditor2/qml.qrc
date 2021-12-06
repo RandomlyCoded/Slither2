@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Circle.qml</file>
+        <file>main.qml</file>
+        <file>SkinVis.qml</file>
+        <file>ColorGrid.qml</file>
+        <file>Button.qml</file>
+    </qresource>
+</RCC>

@@ -109,8 +109,9 @@ Window {
     }
 
     Arrow {
-        position: playgroundView.center
-        direction: Qt.vector2d(mouseArea.mouseX, mouseArea.mouseY)
+        position: Qt.point(playgroundView.x + (playground.size + snake.position.x) * zoom,
+                           playgroundView.y + (playground.size + snake.position.y) * zoom)
+        direction: snake.direction
     }
 
     Row {

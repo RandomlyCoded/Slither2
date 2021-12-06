@@ -94,7 +94,6 @@ void Playground::initialize(qreal size)
 
 bool Playground::checkBounds(QPointF position) const
 {
-// BUG: FIXME: nach Ende dieser Zeile erhält Slither2 ein SIGSEGV
     return QVector2D(position).length() < m_size;
 }
 
