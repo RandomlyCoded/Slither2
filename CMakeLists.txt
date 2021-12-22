@@ -4,7 +4,7 @@ project(Slither2 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(CMAKE_AUTOUIC ON)
+#set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
@@ -15,8 +15,11 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Core Quick REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick REQUIRED)
 
 add_library(Botdefs STATIC)
+add_library(Documentation)
+
 target_link_libraries(Botdefs
     PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
+
 target_sources(
     Botdefs PRIVATE
     Bots
@@ -25,6 +28,10 @@ target_sources(
     followmouse_bot.h followmouse_bot.cpp
     killing_bot.h killing_bot.cpp
     stupid_bot.h stupid_bot.cpp
+)
+target_sources(
+    Documentation PRIVATE
+    Readme.txt
 )
 set(PROJECT_SOURCES
     assets.qrc

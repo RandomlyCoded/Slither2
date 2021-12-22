@@ -165,9 +165,10 @@ QPointF get(const Playground *pg)
 }
 
 }
+
 void Playground::spawnSnake()
 {
-    if(m_snakes.length() >= 10)
+    if(m_snakes.length() >= 1/*0*/)
         return;
 
     Snake *sn = new Snake(this);

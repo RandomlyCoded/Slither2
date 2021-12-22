@@ -32,6 +32,7 @@ public:
     virtual void act(qreal duration) = 0;
 
 protected:
+    QPointF destination() const;
     Playground *playground() const;
     const QPointF position() const;
     Snake *m_snake;

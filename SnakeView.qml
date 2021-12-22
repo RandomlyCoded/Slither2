@@ -113,4 +113,13 @@ Item {
         radius: height
         color: currentSnake.skinLast()
     }
+
+    Rectangle {
+        width: 2
+        height: 2
+        radius: 1
+        color: "limegreen"
+        x: currentSnake.destination.x
+        y: currentSnake.destination.y
+    }
 }

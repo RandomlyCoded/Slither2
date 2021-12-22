@@ -185,6 +185,7 @@ void Snake::spawn(QPointF position, QPointF destination)
 
 void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen verwenden
 {
+    qInfo() << dt << destination();
     if(!m_isAlive)
         return;
     if (m_segments.isEmpty())

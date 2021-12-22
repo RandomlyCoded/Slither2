@@ -16,6 +16,11 @@ Bot::Bot(Snake *controlled)
     QObject::connect(m_snake, &Snake::died, this, &Bot::remove);
 }
 
+QPointF Bot::destination() const
+{
+    return m_snake->destination();
+}
+
 Playground *Bot::playground() const
 {
     return m_snake->playground();
