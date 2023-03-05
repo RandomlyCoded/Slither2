@@ -2,52 +2,37 @@
 #define SLITHER_LEADERBOARD_H
 
 #include <QObject>
+#include <QPointer>
 
+#include "playground.h"
 #include "snake.h"
 
 namespace Slither {
-
-class Snake;
 
 class Leaderboard : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QList<Data> leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
+    Q_PROPERTY(QList<Slither::Snake *> leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
     Q_PROPERTY(Slither::Playground *playground MEMBER m_playground WRITE setPlayground FINAL)
 
 public:
-    struct Data;
+    Leaderboard(Playground *parent = nullptr);
 
-    Leaderboard(QObject *parent = nullptr);
-    Leaderboard(QList<Snake*> snakes);
+    QList<Snake *> leaderboard();
 
-    const QList<Data> &leaderboard() const { return m_leaderSnakes; }
-
+    void reload();
     void setPlayground(Slither::Playground *newPlayground) { m_playground = newPlayground; }
 
 signals:
     void leaderboardChanged();
 
 private:
-    QList<Snake*> m_possibleSnakes;
-    QList<Data> m_leaderSnakes;
+    QList<Snake *> m_leaderSnakes;
 
-    void init();
     void setLeaderSnakes();
-    QPointer<Slither::Playground> m_playground;
-};
-
-struct Leaderboard::Data
-{
-    int size;
-    int index;
-    QString name;
-
-    Q_GADGET
-    Q_PROPERTY(int size MEMBER size CONSTANT FINAL)
-    Q_PROPERTY(int index MEMBER index CONSTANT FINAL)
-    Q_PROPERTY(QString snakeName MEMBER name CONSTANT FINAL)
+    void init();
+    QPointer<Playground> m_playground;
 };
 
 } // namespace Slither

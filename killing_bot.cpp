@@ -8,13 +8,14 @@ namespace Slither
 
 KillingBot::KillingBot(Snake *controlled)
     : Bot(controlled)
+    , stupid(new StupidBot(controlled))
 {}
 
 void KillingBot::act(qreal duration)
 {
     if(!m_target)
         if(!getTarget()) {
-            StupidBot(m_snake).act(duration);
+            stupid->act(duration);
             return;
         }
 

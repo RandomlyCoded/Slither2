@@ -10,6 +10,7 @@ class EatingBot : public Bot
 {
 public:
     EatingBot(Snake *parent);
+    Type type() override { return Bot_Eating; }
 
     void act(qreal dt) override;
 };

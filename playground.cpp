@@ -2,6 +2,7 @@
 
 #include "snake.h"
 #include "bot.h"
+#include "leaderboard.h"
 
 #include <QRandomGenerator>
 #include <QVector2D>
@@ -17,7 +18,12 @@ namespace {
 
 Playground::Playground(QObject *parent)
     : QObject(parent)
-{ initialize(0); }
+    , m_leaderboard(new Leaderboard(this))
+{
+    connect(this, &Playground::snakesChanged, m_leaderboard, &Leaderboard::reload);
+    connect(this, &Playground::totalSnakesSizeChanged, m_leaderboard, &Leaderboard::reload);
+    initialize(0);
+}
 
 bool Playground::checkCrash(Snake *toCheck)
 {
@@ -27,7 +33,6 @@ bool Playground::checkCrash(Snake *toCheck)
 
         for(const auto checkedTile: check->segments()) {
             if(QVector2D(toCheck->position()).distanceToPoint(QVector2D(checkedTile)) < (toCheck->size() + check->size())) {
-                qInfo("YOU CHRASHED");
                 killSnake(toCheck);
                 return true;
             }
@@ -40,7 +45,7 @@ int Playground::totalSnakesSize() const
 {
     qreal amount = 0;
     for(const auto sn: m_snakes)
-        amount += sn->lenght();
+        amount += sn->length();
     return amount;
 }
 
@@ -49,9 +54,9 @@ void Playground::initialize(qreal size)
     // update playground size if needed
     if (size == 0)
         size = m_size;
-#ifdef QT_DEBUG // Debug: have a smaller playground for faster Debug-gameplay
-    size = 100;
-#endif
+//#ifdef QT_DEBUG // Debug: have a smaller playground for faster Debug-gameplay
+    size = 20;
+//#endif
     if (!qFuzzyCompare(m_size, size)) {
         m_size = size;
         emit sizeChanged(m_size);
@@ -59,7 +64,7 @@ void Playground::initialize(qreal size)
 
     // number of pearls we generate depends on the playground's area
     const auto area = M_PI * size * size;
-    const auto count = qRound(area / (m_size * 3/4));
+    const auto count = qRound(area / (m_size * 1/4));
 
     m_maximumEnergy = count;
 
@@ -89,7 +94,7 @@ void Playground::initialize(qreal size)
     connect(this, &Playground::snakesChanged, this, &Playground::totalSnakesSizeChanged);
     if(!m_snakes.isEmpty())
         for(const auto sn: m_snakes)
-            connect(sn, &Snake::lenghtChanged, this, &Playground::totalSnakesSizeChanged);
+            connect(sn, &Snake::lengthChanged, this, &Playground::totalSnakesSizeChanged);
 }
 
 bool Playground::checkBounds(QPointF position) const
@@ -147,20 +152,30 @@ void Playground::killSnake(Snake *snake)
         return;
     if(!snake->isAlive())
         return;
+
     const int killedSnake = m_snakes.indexOf(snake);
+    snake->disconnect(this);
     m_snakes.removeAt(killedSnake);
-    snake->die();
-    disconnect(snake, &Snake::sizeChanged, this, &Playground::totalSnakesSizeChanged);
     emit snakesChanged(m_snakes);
+
+    auto deathpearls = snake->die();
+    for(auto p: deathpearls)
+        m_energyPearls->add(p);
 }
 
 namespace {
 
+qreal bounded(QRandomGenerator *rng, qreal lowest, qreal highest)
+{
+    return rng->bounded(highest - lowest) + lowest;
+}
+
 QPointF get(const Playground *pg)
 {
     auto rng = QRandomGenerator::global();
-    const auto r = pg->size() * pow(rng->generateDouble(), .5) * .25;
-    const auto phi = 2 * M_PI * rng->generateDouble();
+    auto r = pg->size() * bounded(rng, 0, 1); // QPointF(0, 0) is error code.
+    auto phi = 2 * M_PI * rng->bounded(1.);
+
     return QPointF{r * cos(phi), r * sin(phi)};
 }
 
@@ -168,13 +183,38 @@ QPointF get(const Playground *pg)
 
 void Playground::spawnSnake()
 {
-    if(m_snakes.length() >= 1/*0*/)
+    if(m_snakes.length() >= m_maxSnakeAmt)
         return;
 
+    auto pos = get(this);
+    auto dest = get(this);
+    if(!checkBounds(pos)) {
+        uto v = QVector2D(pos);
+        v.normalize();
+        v *= (m_size/2);
+
+        pos = v.toPointF();
+    }
+
     Snake *sn = new Snake(this);
-    addSnake(sn);
-    m_snakes.last()->spawn(get(this), get(this));
+    addSnake(sn); // if its an error its too expensive to generate, add, remove and delete the snake, so do it here.
+
+    m_snakes.last()->spawn(pos, dest);
     emit snakesChanged(m_snakes);
+}
+
+void Playground::deleteSnake(Snake *snake)
+{
+    if(!snake)
+        return;
+    if(!snake->isAlive())
+        return;
+
+    const int killedSnake = m_snakes.indexOf(snake);
+    snake->disconnect(this);
+    m_snakes.removeAt(killedSnake);
+    emit snakesChanged(m_snakes);
+    snake->die();
 }
 
 EnergyPearl Playground::spawnPearl() const
@@ -230,9 +270,11 @@ void Playground::energyBoost()
 
 void Playground::moveSnakes(qreal dt)
 {
+    auto clock = std::chrono::high_resolution_clock();
+    auto start = clock.now();
     for(const auto sn: m_snakes) {
         if(!checkBounds(sn)) {
-            killSnake(sn);
+            deleteSnake(sn);
             continue;
         }
         if(sn->useBot()) {
@@ -242,18 +284,33 @@ void Playground::moveSnakes(qreal dt)
             b->act(dt);
         }
         sn->move(dt);
-//        checkCrash(sn);
+        checkCrash(sn);
     }
+
+    auto end = clock.now();
+    std::chrono::nanoseconds _diff = (end - start);
+    qreal diff = _diff.count() * 1. / (std::nano::den / std::milli::den); // nano -> ms
+    m_tickDelay = diff;
+    /*qInfo() << "start:"   << start.time_since_epoch().count() <<
+               "\tend:"   << end.time_since_epoch().count() <<
+               "\tcount:" << _diff.count() <<
+               "\tdiff:"  << diff << "ms" <<
+               "\tdelay:" << m_tickDelay;*/
+    emit tickDelayChanged();
 }
 
-/*
-void Playground::moveDeathSnakes()
+Leaderboard *Playground::leaderboard() const
 {
-    for(auto sn: m_deathSnakes)
-        for (int i = 1; i < sn->segments().count(); ++i)
-            sn->segments()[i] += (QVector2D{sn->segments()[i] - sn->segments()[i - 1]}).toPointF();
-}*/
+    return m_leaderboard;
+}
+
+qreal Playground::tickDelay() const
+{
+    return m_tickDelay;
+}
 
 } // namespace Slither
 
+#include "leaderboard.h"
+#include "leaderboard.h"
 #include "moc_playground.cpp"

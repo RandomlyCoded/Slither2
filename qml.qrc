@@ -6,5 +6,6 @@
         <file>DebugScreen.qml</file>
         <file>Arrow.qml</file>
         <file>Minimap.qml</file>
+        <file>LeaderboardView.qml</file>
     </qresource>
 </RCC>

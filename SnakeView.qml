@@ -10,77 +10,19 @@ Item {
     x: playgroundView.center.x - (width /2 * zoom)
     y: playgroundView.center.y - height/2
 
-    /*   Repeater {
-        id: snakeView
-
-        model: snake.segments
-
-        Rectangle {
-            id: segmentView
-
-            readonly property int index: model.index
-            readonly property point segment: modelData
-
-            x: playgroundView.center.x + segment.x * zoom - width/2
-            y: playgroundView.center.y + segment.y * zoom - height/2
-            z: snakeView.count - model.index
-
-            border { width: 1; color: "black" }
-
-            property int speeding: mouseArea.pressed
-            property color normalColor: ["red", "#ff7f00", "yellow", "limegreen", "cyan", "blue", "#6a006a"][model.index % 7] // snake.skin[model.index]
-            property color speedColor: ["#ff5555", "orange", "#ffff66", "#55ff55", "#00ffff", "#5555ff", "#7f007f"][model.index % 7] // // snake.speedSkin[model.index]
-            // [["red", "#ff5555"], ["#ff7f00", "orange"], ["yellow", "#ffff66"], ["limegreen", "#55ff55"], ["cyan", "#00ffff"], ["blue", "#5555ff"], ["#6a006a", "#7f007f"]][model.index % 7][speeding]
-            // REGENBOGENSCHLANGE
-
-            color: [currentSnake.skinAt(index), speedColor][speeding]
-
-            property bool isLast: segmentView.index === snakeView.count - 1
-            Behavior on radius {
-                animation: NumberAnimation {
-                    duration: 1000
-                    from: 0
-                    to: 0
-                }
-            }
-
-            radius: {
-                let r = snake.size * zoom; //snake.size;
-
-                if (isLast) {
-                    r *= Math.min(1 + snake.load, 1);
-                }
-
-
-                return r;
-            }
-
-            width: radius * 2
-            height: radius * 2
-
-            Eyes {
-    //                    rotation: Math.atan2(snake.direction.y, snake.direction.x)
-                anchors.horizontalCenter: parent.horizontalCenter
-                viewAngle: Math.atan2(snake.direction.y, snake.direction.x)
-                radius: zoom/2 * currentSnake.size
-                visible: segmentView.index === 0
-            }
-        }
-    }*/
-
-
     Shape {
         antialiasing: true
         width: parent.width
         height: parent.height
         ShapePath {
             strokeWidth: currentSnake.size * zoom * 2
+            strokeColor: "black"
             fillColor: "transparent"
 
             startX: currentSnake.position.x * zoom
             startY: currentSnake.position.y * zoom
             PathPolyline {
-                path: playground.zoomOut(currentSnake.segments, zoom)
+                path: Playground.zoomOut(currentSnake.segments, zoom)
             }
         }
     }
@@ -97,29 +39,40 @@ Item {
 
         Eyes {
             id: eyes
-            anchors.horizontalCenter: parent.horizontalCenter
-            viewAngle: Math.atan2(currentSnake.direction.y, currentSnake.direction.x)
-            radius: zoom/2 * currentSnake.size
+            anchors.centerIn: parent
+            rotation: Math.atan2(currentSnake.direction.y, currentSnake.direction.x) / Math.PI * 180 + 90
+//            onRotationChanged: console.info(rotation, x, y)
+            radius: zoom/2.25 * currentSnake.size
         }
     }
 
     Rectangle {
         id: end
+
         x: currentSnake.lastSegment.x * zoom - radius/2
         y: currentSnake.lastSegment.y * zoom - radius/2
         z: 1
+
         width: currentSnake.size * zoom * 2
         height: width
         radius: height
+
         color: currentSnake.skinLast()
     }
 
     Rectangle {
-        width: 2
-        height: 2
-        radius: 1
+        id: dest
+
+        visible: showDestinations
+
+        width: zoom
+        height: width
+        radius: width/2
+
         color: "limegreen"
-        x: currentSnake.destination.x
-        y: currentSnake.destination.y
+
+        x: currentSnake.destination.x * zoom - radius
+        y: currentSnake.destination.y * zoom - radius
+        z: 100
     }
 }

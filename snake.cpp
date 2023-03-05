@@ -18,11 +18,7 @@ namespace Slither {
 
 void Snake::setDestination(QPointF destination)
 {
-    if (m_destination == destination)
-        return;
-
-    m_destination = destination;
-    emit destinationChanged(m_destination);
+    m_requestedDestination = destination;
 }
 
 void Snake::setSpeed(qreal speed)
@@ -45,19 +41,23 @@ void Snake::setSize(int size)
 
 void Snake::setBotType(BotType type)
 {
+    qInfo() << Q_FUNC_INFO << type;
     delete m_bot;
     switch(type) {
-    case Slither::Snake::BotType::StupidBot:
+    case BotType::Bot_Stupid:
         m_bot = new StupidBot(this);
         break;
-    case Slither::Snake::BotType::EatingBot:
+    case BotType::Bot_Eating:
         m_bot = new EatingBot(this);
         break;
-    case Slither::Snake::BotType::KillingBot:
+    case BotType::Bot_Killing:
         m_bot = new KillingBot(this);
         break;
-    case Slither::Snake::BotType::FollowMouseBot:
+    case BotType::Bot_NoBot:
         m_bot = new FollowMouseBot(this);
+        break;
+    case BotType::Bot_Intelligent:
+        m_bot = new AiBot(this);
         break;
     default:
         m_bot = new StupidBot(this);
@@ -79,16 +79,21 @@ QString Snake::positionInfo()
     return str;
 }
 
-Snake::Snake(QObject *parent)
-    : QObject{parent}
-    , m_bot(new StupidBot{this})
-    , m_size(1)
-    , m_isAlive(false)
-    , m_segments({QPointF(0, 0)})
+void Snake::init()
 {
     connect(this, &Snake::destinationChanged, this, &Snake::directionChanged);
     connect(this, &Snake::positionChanged, this, &Snake::directionChanged);
     m_skin = {Qt::red, Qt::green, Qt::blue};
+}
+
+Snake::Snake(QObject *parent)
+    : QObject{parent}
+    , m_bot(new AiBot{this})
+    , m_size(1)
+    , m_isAlive(false)
+    , m_segments({QPointF(0, 0)})
+{
+    init();
 }
 
 Snake::Snake(Snake &other)
@@ -106,33 +111,36 @@ Snake::Snake(Snake &other)
     m_speed = other.speed();
     m_load = other.load();
 
-    m_lenght = other.lenght();
+    m_length = other.length();
     m_useBot = other.useBot();
-    m_position = other.position();
+
+    init();
 
     m_skin = other.skin();
 }
 
-void Snake::die()
+Snake::Snake(ImportantData &d)
 {
+    setBotType(BotType(d.botType));
+    init();
+    m_segments = d.segs;
+    m_destination = d.dest;
+    m_size = 1;
+    m_load = 0;
+    m_length = 0;
+}
+
+QList<EnergyPearl> Snake::die()
+{
+    QList<EnergyPearl> pearls;
     const auto rng = QRandomGenerator::global();
     for(int i = 0; i < m_segments.count(); i += m_size) {
         const QPointF &seg = m_segments[i];
         QColor clr = skinAt(i);
-        qreal r = clr.red()   + rng->generateDouble(); if(r > 255.) r = 255;
-        qreal g = clr.blue()  + rng->generateDouble(); if(g > 255.) g = 255.;
-        qreal b = clr.green() + rng->generateDouble(); if(b > 255.) b = 255.;
-        playground()->addPearl(seg + QPointF(rng->generateDouble(), rng->generateDouble()), m_size, QColor(r, g, b), true);
-    }
-
-    qInfo("you died");
-
-//  die Schlange zerplatzt ... wenn die Schlange stirbt?
-
-    for(int i = 0; i < m_segments.count(); i++) {
-        const auto angle = rng->bounded(360);
-        const auto r = playground()->size();
-        m_segments[i] = QPointF{r * cos(angle), r * sin(angle)};
+        qreal r = clr.red()   + rng->generateDouble(); if(r > 255) r = 255;
+        qreal g = clr.blue()  + rng->generateDouble(); if(g > 255) g = 255;
+        qreal b = clr.green() + rng->generateDouble(); if(b > 255) b = 255;
+        pearls.append(EnergyPearl{qreal(m_size), seg + QPointF(rng->generateDouble(), rng->generateDouble()), QColor(r, g, b)});
     }
 
     m_isAlive = false;
@@ -142,12 +150,14 @@ void Snake::die()
 
     playDieSound();
     emit died();
+
+    return pearls;
 }
 
-QString Snake::lenghtInfo() const
+QString Snake::lengthInfo() const
 {
     QString str;
-    str = QString::fromStdString(std::to_string(lenght()));
+    str = QString::fromStdString(std::to_string(length()));
 
     std::string s = str.toStdString();
 
@@ -173,46 +183,80 @@ void Snake::spawn(QPointF position, QPointF destination)
          ; ++i)
         m_segments.append(/*position - (dp * i).toPointF()*/position - destination);
 
-    m_lenght = m_segments.count();
+    m_length = m_segments.count();
     emit destinationChanged(m_destination);
     emit positionChanged();
 
     emit segmentsChanged(m_segments);
-    emit lenghtChanged();
+    emit lengthChanged();
 
     emit isAliveChanged();
 }
 
+QVector2D min(QVector2D a, QVector2D b)
+{
+    return a.length() < b.length() ? a : b;
+}
+
+void Snake::setDest()
+{
+    const auto rotationSpeed = 0.15 / m_size;
+    // get the direction and the requested direction as normalized vector
+    const auto dp = direction();
+    const auto reqDp = QVector2D{m_requestedDestination - m_segments[0]}.normalized();
+
+    // get the angle of each vector
+    const auto ang = atan2(dp.y(), dp.x()) + M_PI;
+    const auto reqAng = atan2(reqDp.y(), reqDp.x()) + M_PI;
+
+    // get the difference of both angles
+    const auto _diff = reqAng - ang;
+    qreal diff;
+
+    if(qFuzzyIsNull(_diff)) // if the rotation is ~ 0, return
+        return;
+    if(_diff < 0)
+        diff = -rotationSpeed;
+    else
+        diff = rotationSpeed;
+
+    if(qAbs(_diff) > M_PI) // rotation > 180°
+        diff *= -1;
+
+    if(qAbs(diff) > qAbs(_diff)) // the difference is less then the standard rotation, so rotate the difference
+        diff = _diff;
+
+    diff += ang - M_PI; // add the angle(normal, so -M_PI) to get the actual direction
+
+    // set the destination
+    m_destination = position() + QPointF(cos(diff), sin(diff));
+
+    emit destinationChanged(m_destination);
+}
+
 void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen verwenden
 {
-    qInfo() << dt << destination();
     if(!m_isAlive)
         return;
     if (m_segments.isEmpty())
         return;
 
+    if(m_destination == position())
+        m_requestedDestination = {0, 0}; // stop snakes from not moving at all
+
     auto dp = direction();
+    setDest();
 
     if (m_playground) {
         if (const auto energy = m_playground->consumeNearbyPearls(position(), this); energy > 0) {
             for (m_load += energy; m_load > 0; --m_load)
                 m_segments.append(m_segments.last());
 
-            if((lenght() / m_size) > 200) {
+            if((length() / m_size) > 200)
                 emit sizeChanged(++m_size);
-//                qInfo() << "lenght > 200;" << lenght() << "reset segments";
-//                QList<QPointF> tmp = m_segments;
-//                m_segments.clear();
-//                int amount = tmp.count();
-//                amount /= m_size++;
-//                for(int i = 0; i < amount; i++) {
-//                    m_segments.append(tmp[i]);
-//                }
-//                tmp.clear();
-            }
 
             emit segmentsChanged(m_segments);
-            emit lenghtChanged();
+            emit lengthChanged();
         }
     }
 
@@ -236,10 +280,8 @@ void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen ve
     emit positionChanged();
     emit segmentsChanged(m_segments);
 
-    m_lenght = m_segments.count();
-    emit lenghtChanged();
-
-    playground()->checkCrash(this);
+    m_length = m_segments.count();
+    emit lengthChanged();
 }
 
 void Snake::setBoosting(bool newBoosting)
@@ -270,7 +312,6 @@ void Snake::setUseBot(bool newUseBot)
 
 void Snake::playDieSound()
 {
-    qInfo() << "playing \"die-sound\"";
 /*    QMediaPlayer player;
     player.setAudioRole(QAudio::MusicRole);
     player.setMuted(false);
@@ -283,5 +324,12 @@ void Snake::playDieSound()
 }
 
 } // namespace Slither
+
+template<class Stream>
+Stream &operator <<(Stream &s, Slither::Snake &sn)
+{
+    s << sn.size() << sn.name();
+    return s;
+}
 
 #include "moc_snake.cpp"

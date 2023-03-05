@@ -8,23 +8,29 @@ Window {
     id: main
 
     color: Qt.color("#9e0000")
+
     property color normalColor: "red"
     property color speedColor: "#ff5555"
-    property real fps: 30
+
+    property int fps: 30
     property real zoom: 16
+
     property bool debugging: false
+    property bool speedHack: false
+
+    property int backgroundAnimationSpeed: 20000
+    property real frameDelay: 0
+
+    property bool showLeaderboard: true
+    property bool showMinimap: true
+    property bool showDestinations: true
 
     width: 640
     height: 480
     visible: true
     visibility: Window.Maximized
 
-    flags: Qt.Sheet
-    onVisibleChanged: { playground.initialize(0); playground.load(APP.startmap); }
-
-    Playground {
-        id: playground
-    }
+//    flags: Qt.Sheet
 
     Snake {
         id: snake
@@ -41,23 +47,35 @@ Window {
     Rectangle {
         id: playgroundView
 
+        Rectangle {
+            id: middle
+            width: 4
+            height: 4
+            radius: 2
+            color: "black"
+            x: parent.width/2
+            y: parent.height/2
+        }
+
         readonly property point center: Qt.point(width/2, height/2)
         property int i: 0
 
-        color: playground.color(i)
+        color: Playground.color(i)
 
         NumberAnimation on i {
+            id: bgAnimation
             from: 0
             to: 359
-            duration: 20000 // 200
+            duration: backgroundAnimationSpeed
             loops: Animation.Infinite
         }
 
-        radius: playground.size * zoom
+        radius: Playground.size * zoom
 
         x: (main.width - width)/2   - (snake.position.x * zoom)
         y: (main.height - height)/2 - (snake.position.y * zoom)
         width: radius * 2
+
         height: radius * 2
 
         border.color: "red"
@@ -79,7 +97,7 @@ Window {
         Repeater {
             id: pearlView
 
-            model: playground.energyPearls
+            model: Playground.energyPearls
 
             Rectangle {
                 readonly property var pearl: model.data
@@ -99,7 +117,7 @@ Window {
         anchors.fill: playgroundView
 
         Repeater {
-            model: playground.snakes
+            model: Playground.snakes
 
             SnakeView {
                 id: snakeView
@@ -109,8 +127,8 @@ Window {
     }
 
     Arrow {
-        position: Qt.point(playgroundView.x + (playground.size + snake.position.x) * zoom,
-                           playgroundView.y + (playground.size + snake.position.y) * zoom)
+        position: Qt.point(playgroundView.x + (Playground.size + snake.position.x) * zoom,
+                           playgroundView.y + (Playground.size + snake.position.y) * zoom)
         direction: snake.direction
     }
 
@@ -122,11 +140,11 @@ Window {
 
             onClicked: {
                 if(snake.isAlive) {
-                    playground.killSnake(snake)
+                    Playground.killSnake(snake)
                     console.info("snake lived so killed it")
                 }
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
-                playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
+                Playground.addSnake(snake); // FIXME: _maybe_ rewrite into Playground.spawnSnake() ?
                 snake.setBotType(Snake.FollowMouse)
             }
         }
@@ -136,7 +154,7 @@ Window {
             font.pixelSize: 12
 
             onClicked: {
-                playground.killSnake(snake)
+                Playground.killSnake(snake)
             }
         }
 
@@ -145,7 +163,7 @@ Window {
             font.pixelSize: 12
 
             onClicked: {
-                playground.save()
+                Playground.save()
                 console.info("saved game")
             }
         }
@@ -155,7 +173,7 @@ Window {
             font.pixelSize: 12
 
             onClicked: {
-                playground.load()
+                Playground.load()
                 console.info("loaded game")
             }
         }
@@ -175,20 +193,26 @@ Window {
         }
 
         CheckBox {
-            checked: playground.masshacks
+            checked: Playground.masshacks
             text: "<- masshacks active\t"
 
-            onToggled: playground.switch_masshacks()
+            onToggled: Playground.switch_masshacks()
         }
 
         CheckBox {
-            checked: playground.checkChrash
+            checked: Playground.checkChrash
             text: "<- check chrash\t"
-            onToggled: playground.checkChrash ^= 1
+            onToggled: Playground.checkChrash ^= 1
+        }
+
+        CheckBox {
+            checked: speedHack
+            text: "<- speed Hack\t"
+            onToggled: speedHack ^= 1
         }
 
         Text {
-            text: "your lenght: <b>" + snake.lenght + "</b>"
+            text: "your length: <b>" + snake.length + "</b>"
         }
     }
 
@@ -210,8 +234,10 @@ Window {
             let currentTick = now();
             let dt = (currentTick - lastTick/*get time passes*/) / 1000;
             lastTick = currentTick;
+            frameDelay = dt
 
-            playground.moveSnakes(dt);
+            Playground.moveSnakes(speedHack ? .1 : dt);
+            leaderboardView.reload()
         }
     }
 
@@ -223,14 +249,14 @@ Window {
             switch(event.key) {
             case Qt.Key_S: {
                 if(snake.isAlive)
-                                playground.killSnake(snake)
+                                Playground.killSnake(snake)
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
-                playground.addSnake(snake); // FIXME: _maybe_ rewrite into playground.spawnSnake() ?
+                Playground.addSnake(snake); // FIXME: _maybe_ rewrite into Playground.spawnSnake() ?
                 snake.changeBotUsing()
             } break;
 
             case Qt.Key_K: {
-                playground.killSnake(snake)
+                Playground.killSnake(snake)
             } break;
             case Qt.Key_B: {
                 snake.changeBotUsing()
@@ -243,7 +269,7 @@ Window {
                 timer.running = !timer.running
             } break;
             case Qt.Key_Save: {
-                playground.save()
+                Playground.save()
             } break;
             case Qt.Key_F11: {
                 console.info("F11")
@@ -260,18 +286,24 @@ Window {
                 console.info("nggyu ._.")
             } break;
             case Qt.Key_M: {
-                playground.switch_masshacks();
+                Playground.switch_masshacks();
             } break;
             } // switch
         }
     }
 
     Minimap {
+        MouseArea {
+            anchors.fill: parent
+            onClicked: leaderboardView.reload()
+        }
+
         x: parent.width - width - 10
         y: parent.height - height - 10
     }
 
     Rectangle {
+        id: mapBorder
         width: playgroundView.width
         height: playgroundView.height
         radius: playgroundView.radius
@@ -280,21 +312,9 @@ Window {
         color: "transparent"
         border.color: "#ff0000"
     }
-
-    Column {
-        spacing: 1
-        Repeater {
-            model: Leaderboard.leaderboard
-            Row {
-                spacing: 5
-                Text {
-                    text: "#" + (modelData.index + 1) + (modelData.index === 10 ? " " : "  ") + modelData.name
-                }
-                Text {
-                    text: modelData.size
-                }
-            }
-        }
+    LeaderboardView {
+        id: leaderboardView
+        x: parent.width - width
     }
 
     DebugScreen {

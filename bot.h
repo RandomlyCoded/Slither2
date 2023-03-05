@@ -12,6 +12,7 @@
 
 namespace Slither {
 
+struct EnergyPearl;
 class Snake;
 class Playground;
 
@@ -23,19 +24,36 @@ bool is_inrange(qreal dist, qreal value, qreal range);
 
 class Bot : public QObject
 {
-    void remove();
+    Q_OBJECT
 
 public:
-    ~Bot() { }
+    enum Type : uchar
+    {
+        Bot_Eating,      // EatingBot
+        Bot_NoBot,       // FollowMouseBot
+        Bot_Killing,     // KillingBot
+        Bot_Stupid,      // StupidBot
+        Bot_Intelligent, // AIBot
+    };
+
+    Q_ENUM(Type)
+
     Bot(Snake *controlled);
 
+    /// DO NOT ENTER m_snake->move(duration)
     virtual void act(qreal duration) = 0;
+    virtual Type type() = 0;
+    QPointF position() const;
+    Snake *snake();
 
 protected:
     QPointF destination() const;
     Playground *playground() const;
-    const QPointF position() const;
     Snake *m_snake;
+
+    Slither::EnergyPearl findNextFood();
+    QPointF findNextSnakeSegment();
+    QPointF findBorder();
 };
 
 } // namespace Slither

@@ -1,46 +1,125 @@
 #include "playground.h"
+#include "snake.h"
 
+#include "aibot.h"
+
+#include <QDebug>
 #include <QFile>
+#include <neuralnet.h>
 
 namespace Slither {
 
-QTextStream &operator <<(QTextStream &ts, QList<Slither::Snake*> snakes)
+QDataStream &operator<<(QDataStream &ds, Snake::ImportantData &d)
 {
-    return ts;
-}
-QTextStream &operator >>(QTextStream &ts, QList<Slither::Snake*> snakes)
-{
-    return ts;
+    ds << d.segC;
+    //we can't print the segments as a list due to how QList<T> is written :( so in a for-loop
+
+    for(auto p: d.segs)
+        ds << p;
+
+    ds << d.dest << d.botType;
+
+    return ds;
 }
 
-QTextStream &operator <<(QTextStream &ts, EnergyPearlListModel *epL)
+QDataStream &operator>>(QDataStream &ds, Snake::ImportantData &d)
 {
-    return ts;
+    ds >> d.segC;
+
+    d.segs.clear();
+    d.segs.reserve(d.segC);
+    QPointF seg;
+    for(int i = 0; i < d.segC; i++) {
+        ds >> seg;
+        d.segs.append(seg);
+    }
+
+    ds >> d.dest;
+
+    ds >> d.botType;
+
+    return ds;
 }
-QTextStream &operator >>(QTextStream &ts, EnergyPearlListModel *epL)
+
+QDataStream &operator<<(QDataStream &ds, EnergyPearl &p)
 {
-    return ts;
+    ds << p.position;
+    ds << p.amount;
+    ds << p.color;
+
+    return ds;
+}
+
+QDataStream &operator>>(QDataStream &ds, EnergyPearl &p)
+{
+    ds >> p.position;
+    ds >> p.amount;
+    ds >> p.color;
+
+    return ds;
+}
+
+QDataStream &operator<<(QDataStream &ds, NeuralNet *n)
+{
+    return ds;
+}
+
+QDataStream &operator>>(QDataStream &ds, NeuralNet *n)
+{
+    return ds;
 }
 
 void Playground::save()
 {
-    qInfo() << "start saving";
-    QFile saveFile{"../../data/game.slgame", this};
+    QFile saveFile{"data/game.slgame", this};
 
     if(!saveFile.open(QFile::WriteOnly)) {
         qWarning() << saveFile.fileName() << ":" << saveFile.errorString();
         return;
     }
 
-    QTextStream stream{&saveFile};
-    stream << m_energyPearls << Qt::endl;
-    stream << m_snakes;
+    QDataStream stream{&saveFile};
+
+//    QTextStream stream{&saveFile};
+
+
+    // write the size of the playground(8 bytes, a 64-bit-integer)
     stream << m_size;
+    // now write the snakes:
+    // first of all the amount of snakes
+    stream << m_snakes.count();
+
+    Snake::ImportantData sD;
+    for(auto *sn: m_snakes) {
+        sD = Snake::ImportantData(sn); // so we are up-to-date
+        stream << sD;
+    }
+
+    // now the enery pearls
+    // write the amount
+    stream << m_energyPearls->rowCount();
+    for(auto &p: *m_energyPearls)
+        stream << p;
+
+    /*
+     *    8 bytes playground size
+     *
+     * +snakes: (at least 41 bytes each)
+     *    8 bytes size(means amount of segments)
+     *    1 byte  botType
+     *  +16 bytes destination
+     *  +16 bytes segments (for each segment)
+     *
+     * +energy pearls: (40 bytes each)
+     *   16 bytes position
+     *  + 8 bytes value
+     *  +16 Bytes color
+     */
 }
 
 void Playground::load()
 {
-    load("../../data/game.slgame");
+    load("data/game.slgame");
 }
 
 void Playground::load(QString filename)
@@ -54,12 +133,31 @@ void Playground::load(QString filename)
         return;
     }
 
-    QTextStream stream{&saveFile};
+    QDataStream stream{&saveFile};
+
+    m_snakes.clear();
+    m_energyPearls->reset();
 
     stream >> m_size;
-    stream >> m_energyPearls;
-    m_snakes.clear();
-    stream >> m_snakes;
+
+    qsizetype snakeAmt;
+    stream >> snakeAmt;
+
+    Snake::ImportantData sD;
+    for(int i = 0; i < snakeAmt; i++) {
+        stream >> sD;
+        Snake * s = new Snake(sD);
+        addSnake(s);
+    }
+
+    qsizetype ePAmt;
+    stream >> ePAmt;
+
+    for(int i = 0; i < ePAmt; i++) {
+        EnergyPearl p;
+        stream >> p;
+        m_energyPearls->add(p);
+    }
 
     emit snakesChanged(m_snakes);
     emit energyPearlsChanged();

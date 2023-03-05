@@ -12,6 +12,9 @@ public:
     StupidBot(Snake *parent);
 
     void act(qreal duration) override;
+
+    Type type() override { return Bot_Stupid; }
+
 private:
     bool wouldChrash(qreal dt);
     void changeDestination();

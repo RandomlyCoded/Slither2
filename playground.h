@@ -1,9 +1,8 @@
 #ifndef SLITHER_PLAYGROUND_H
 #define SLITHER_PLAYGROUND_H
 
-#include "snake.h"
+#include "leaderboard.h"
 
-#include <QDebug>
 #include <QAbstractListModel>
 #include <QColor>
 #include <QObject>
@@ -13,6 +12,8 @@
 namespace Slither {
 
 class Bot;
+class Snake;
+class Leaderboard;
 
 struct EnergyPearl
 {
@@ -26,12 +27,6 @@ struct EnergyPearl
     Q_PROPERTY(QColor color MEMBER color CONSTANT FINAL)
 };
 
-struct Chunk
-{
-    QPoint pos;
-    QList<Slither::EnergyPearl> pearls;
-};
-
 template<class T>
 class DataListModel : public QAbstractListModel
 {
@@ -41,6 +36,9 @@ public:
     };
 
     using QAbstractListModel::QAbstractListModel;
+
+    typename QList<T>::Iterator begin() { return m_rows.begin(); }
+    typename QList<T>::Iterator end() { return m_rows.end(); }
 
     void reset(QList<T> rows = {});
     void add(T rows = {});
@@ -104,7 +102,6 @@ template<class T>
 bool DataListModel<T>::setData(const QModelIndex &index, const QVariant &data, int role)
 {
     if (checkIndex(index) && role == DataRole && data.canConvert<T>()) {
-//        qInfo("CHANGE");
         m_rows[index.row()] = data.value<T>();
         emit dataChanged(index, index, {role});
         return true;
@@ -135,11 +132,15 @@ class Playground : public QObject
 
     Q_PROPERTY(bool masshacks READ masshacks NOTIFY masshacksChanged FINAL)
 
+    Q_PROPERTY(Leaderboard *leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
+
+    Q_PROPERTY(qreal tickDelay READ tickDelay NOTIFY tickDelayChanged FINAL)
+
 public:
     Playground(QObject *parent = nullptr);
     qreal size() const noexcept { return m_size; }
     EnergyPearlListModel *energyPearls() const { return m_energyPearls; }
-    QList<Snake*> snakes() { return m_snakes; };
+    QList<Snake*> snakes() const { return m_snakes; };
 
     bool checkCrash(Snake *toCheck);
 
@@ -155,11 +156,15 @@ public:
 
     bool masshacks() const { return m_masshacksActive; }
 
+    Leaderboard *leaderboard() const;
+
+    qreal tickDelay() const;
+
 public slots:
     void tp()
     {
-        for(int i = i; i < m_energyPearls->rowCount(); i++)
-            m_energyPearls->at(i).position = QPointF(0, 0);
+        for(auto &p: *m_energyPearls)
+            p.position = QPointF(0, 0);
     }
     void switch_masshacks() { m_masshacksActive ^= 1; }
     void initialize(qreal size);
@@ -170,6 +175,7 @@ public slots:
     void addSnake(Snake *snake);
     void killSnake(Snake *snake);
     void spawnSnake();
+    void deleteSnake(Snake *snake);
 
     EnergyPearl spawnPearl() const;
     EnergyPearl addPearl(QPointF position = {0, 0}, qreal amount = 1, QColor color = "#7f7f7f",
@@ -183,14 +189,14 @@ public slots:
 
     void moveSnakes(qreal dt);
 
-    int indexOfSnake(Snake *snake) { return m_snakes.indexOf(snake); }
+    int indexOfSnake(Slither::Snake *snake) { return m_snakes.indexOf(snake); }
 
     QList<QPointF> zoomOut(QList<QPointF> positions, int zoom)
     { QList<QPointF> ret; for(const auto &pos: positions) ret += (pos * zoom); return ret; }
 
 signals:
     void sizeChanged(qreal size);
-    void snakesChanged(QList<Snake *> snakes);
+    void snakesChanged(QList<Slither::Snake *> snakes);
 
     void colorChanged();
 
@@ -199,6 +205,10 @@ signals:
     void totalSnakesSizeChanged();
 
     void masshacksChanged();
+
+    void leaderboardChanged();
+
+    void tickDelayChanged();
 
 private:
     QTimer *m_newSnakeTimer = new QTimer{this};
@@ -214,6 +224,9 @@ private:
     int m_pearlAmount;
     int m_snakeCount;
     bool m_masshacksActive = 0;
+    QPointer<Leaderboard> m_leaderboard;
+    int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
+    qreal m_tickDelay;
 };
 
 

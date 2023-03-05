@@ -6,6 +6,8 @@
 namespace Slither
 {
 
+class StupidBot;
+
 class KillingBot : public Bot
 {
 public:
@@ -13,7 +15,10 @@ public:
 
     void act(qreal duration) override;
 
+    Type type() override { return Bot_Killing; }
+
 private:
+    StupidBot *stupid;
     Snake *m_target = 0;
     bool getTarget();
 };

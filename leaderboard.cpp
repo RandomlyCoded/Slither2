@@ -1,46 +1,63 @@
 #include "leaderboard.h"
-
-#include "bot.h"
+#include "snake.h"
 
 #include <QDebug>
 
 namespace Slither {
 
-Leaderboard::Leaderboard(QObject *parent)
-    : m_possibleSnakes({})
+Leaderboard::Leaderboard(Playground *parent)
+    : QObject(parent)
+    , m_playground(parent)
 {
     init();
 }
 
-Leaderboard::Leaderboard(QList<Snake*> snakes)
-    : m_possibleSnakes(snakes)
+QList<Snake *> Leaderboard::leaderboard()
 {
-    init();
+    reload();
+    return m_leaderSnakes;
+}
+
+void Leaderboard::reload()
+{
+    setLeaderSnakes();
 }
 
 void Leaderboard::init()
 {
-    m_leaderSnakes.reserve(10);
-
     setLeaderSnakes();
 }
 
+bool compSnakes(Snake *a, Snake *b)
+{ return *a > *b; } // if we compare using '<' we get the list in the wrong order
+
 void Leaderboard::setLeaderSnakes()
 {
-    std::sort(m_possibleSnakes.begin(), m_possibleSnakes.end());
+    QList<Snake *> possibleSnakes = m_playground->snakes();
+
+/*    qInfo() << "before std::sort:";
+    for(auto &sn: possibleSnakes)
+        qInfo() << "\t" << sn << sn->lengthInfo();
+    qInfo() << "\n";
+*/ // debug stuff, actually not needed anymore
+
+    std::sort(possibleSnakes.begin(), possibleSnakes.end(), compSnakes); // sort the snakes using compSnakes.
+
+/*
+    qInfo() << "after std::sort:";
+    for(auto &sn: possibleSnakes)
+        qInfo() << "\t" << sn << sn->lengthInfo();
+    qInfo() << "\n";
+*/ // debug stuff.
+
     m_leaderSnakes = {};
-    for(int i = 0; i < qMin(m_leaderSnakes.size(), 10); i++) {
-        Data d;
-        d.size = m_possibleSnakes[i]->size();
-        d.index = i;
-        d.name = m_possibleSnakes[i]->name();
-        m_leaderSnakes.append(d);
+    for(int i = 0; i < qMin(possibleSnakes.size(), 10); i++) {
+        m_leaderSnakes.append(possibleSnakes[i]);
+//        qInfo().nospace() << "SNAKE #" << i << ": " << m_leaderSnakes[i]->lengthInfo() << " " << m_leaderSnakes[i]->name();
     }
 
     emit leaderboardChanged();
 }
-
-
 
 } // namespace Slither
 

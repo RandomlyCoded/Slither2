@@ -13,11 +13,6 @@ inline QPointF next(const Snake *s, qreal dt)
                                                                                    // it will be after s->move(dt)
 }
 
-QVector2D relativePosition(const Snake *s)
-{
-    return QVector2D(s->destination() - s->position());
-}
-
 }
 
 StupidBot::StupidBot(Snake *parent)
@@ -30,27 +25,16 @@ void StupidBot::act(qreal duration)
         changeDestination();
         return;
     }
-    m_snake->setDestination(QVector2D(position() + destination()).toPointF());
+    m_snake->setDestination(position() + m_snake->direction().toPointF());
 }
 
 bool StupidBot::wouldChrash(qreal dt)
-{ return !playground()->checkBounds(next(m_snake, dt)); }
+{ return !playground()->checkBounds(next(m_snake, dt)); } // avoid crashes into other snakes using findNextSnake
 
-namespace {
-
-int get()
-{
-    auto a = QRandomGenerator::global()->bounded(2);
-    auto b = 1 - (a * 2);
-    qInfo() << a << b;
-    return b;
-}
-
-}
 void StupidBot::changeDestination()
 {
-    qreal angle = QRandomGenerator::global()->generateDouble() * get();
-    m_snake->setDestination(QPointF{cos(angle), sin(angle)});
+    qreal angle = QRandomGenerator::global()->generateDouble() * 360;
+    m_snake->setDestination(QPointF{cos(angle), sin(angle)} * playground()->size());
 }
 
 } // namespace Slither

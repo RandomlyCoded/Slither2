@@ -11,6 +11,8 @@ public:
     FollowMouseBot(Snake *controlled);
 
     void act(qreal dt) override;
+
+    Type type() override { return Bot_NoBot; }
 };
 
 } // namespace Slither

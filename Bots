@@ -4,3 +4,4 @@
 #include "followmouse_bot.h" // bot, alwys follows the mouse; this is a value bot
 #include "killing_bot.h"     // bot, always tries to kill
 #include "stupid_bot.h"      // stupid bot
+#include "aibot.h"           // should be an AI, learns when it dies

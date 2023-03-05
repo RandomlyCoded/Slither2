@@ -30,7 +30,7 @@ class Snake : public QObject
 
     Q_PROPERTY(qreal load READ load NOTIFY loadChanged FINAL)
     Q_PROPERTY(int size READ size WRITE setSize NOTIFY sizeChanged FINAL)
-    Q_PROPERTY(QString lenght READ lenghtInfo NOTIFY lenghtChanged FINAL)
+    Q_PROPERTY(QString length READ lengthInfo NOTIFY lengthChanged FINAL)
     Q_PROPERTY(QList<QColor> skin READ skin WRITE setSkin NOTIFY skinChanged FINAL)
 
     Q_PROPERTY(Bot bot READ bot /*NOTIFY botChanged*/ FINAL)
@@ -42,15 +42,29 @@ class Snake : public QObject
     Q_PROPERTY(bool boosting READ boosting WRITE setBoosting NOTIFY boostingChanged FINAL)
 
     Q_PROPERTY(QPointF direction_point READ dir_p NOTIFY directionChanged FINAL)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
 
 public:
-    explicit Snake(QObject *parent = {});
-    Snake(Snake &other);
+    struct ImportantData {
+        ImportantData(Snake *s)
+            : segC(s->segments().count()), segs(s->segments()), dest(s->destination()), botType(s->botType()), s(s) {}
+        ImportantData() {}
+        int segC;
+        QList<QPointF> segs;
+        QPointF dest;
+        uchar botType;
+        Snake *s;
+    };
 
-    bool operator <(Snake &other) { return lenght() < other.lenght(); }
-    bool operator >(Snake &other) { return other < *this; }
-    bool operator<=(Snake &other) { return !(*this > other); }
-    bool operator>=(Snake &other) { return !(*this < other); }
+    explicit Snake(QObject *parent = nullptr);
+    Snake(Snake &other);
+    Snake(ImportantData &d);
+
+    bool operator <(Snake &other) { return length() < other.length(); }
+    bool operator >(Snake &other) { return other < *this; }                 // a < b means b < a
+    bool operator<=(Snake &other) { return !(*this > other); }              // a <= b means !(b < a)
+    bool operator>=(Snake &other) { return !(*this < other); }              // a >= b means !(b > a)
+    bool operator==(Snake &other) { return length() == other.length(); }
 
     QList<QPointF> segments() const { return m_segments; }
     QPointF destination() const { return m_destination; }
@@ -67,11 +81,11 @@ public:
     bool useBot() const { return m_useBot; }
     Bot *bot() const { return m_bot.get(); }
 
-    void die();
+    QList<EnergyPearl> die();
 
     int size() const { return m_size; }
-    qreal lenght() const { return (m_lenght + m_load); }
-    QString lenghtInfo() const;
+    qreal length() const { return m_length + m_load; }
+    QString lengthInfo() const;
 
     bool isAlive() const { return m_isAlive; }
 
@@ -104,15 +118,8 @@ public:
 
     QString name() { return "Snake#kp"; }
 
-    enum class BotType : unsigned char
-    {
-        StupidBot      = 0,
-        EatingBot      = 1,
-        KillingBot     = 2,
-        FollowMouseBot = 3,
-    };
-
-    Q_DECLARE_FLAGS(BotTypes, BotType)
+    using BotType = Bot::Type;
+    BotType botType() { return m_bot->type(); }
 
 public slots:
     void spawn(QPointF position, QPointF destination);
@@ -128,7 +135,7 @@ public slots:
     QColor skinAt(int index) { return m_skin[index % m_skin.length()]; }
     QColor skinLast() { return m_skin.last(); }
 
-    void setBotType(BotType type);
+    void setBotType(Slither::Snake::BotType type); // bruh sry but clang :)
 
 signals:
     void died();
@@ -141,7 +148,7 @@ signals:
     void loadChanged(qreal load);
 
     void sizeChanged(int size);
-    void lenghtChanged();
+    void lengthChanged();
 
     void botUsingChanged();
 
@@ -159,24 +166,31 @@ private:
     bool m_isAlive = true;
     QColor m_color;
     QColor m_speedColor;
-/*    int loadCounter = 1;
-    int snakeSize = m_segments.count() / loadCounter;*/
 
     QPointer<Slither::Playground> m_playground;
     QList<QPointF> m_segments = {};
     QPointF m_destination;
+    QPointF m_requestedDestination = {};
+
+    int m_length;
+
+    friend Playground;
 
     qreal m_speed = 5;
     qreal m_load = 0;
 
-    int m_lenght;
     bool m_useBot = true;
-    QPointF m_position;
 
     QList<QColor> m_skin;
     bool m_boosting;
+
+    void init();
+    void setDest();
 };
 
-} // namespace Slither
+} //namespace Slither
+
+template<class Stream>
+Stream &operator<<(Stream &s, Slither::Snake &sn);
 
 #endif // SLITHER_SNAKE_H
