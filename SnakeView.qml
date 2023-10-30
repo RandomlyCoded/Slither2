@@ -2,7 +2,7 @@ import QtQuick 2.15
 
 import QtQuick.Shapes 1.12
 
-import Slither 1.0
+import Slither
 
 Item {
     property Snake currentSnake
@@ -16,7 +16,7 @@ Item {
         height: parent.height
         ShapePath {
             strokeWidth: currentSnake.size * zoom * 2
-            strokeColor: "black"
+            strokeColor: currentSnake.boosting ? "white" : "black"
             fillColor: "transparent"
 
             startX: currentSnake.position.x * zoom
