@@ -12,9 +12,6 @@ class NeuralNet;
 namespace Slither
 {
 
-class Net1;
-class Net2;
-
 class AiBot : public Bot
 {
     Q_OBJECT
@@ -40,7 +37,9 @@ private:
 
     qreal m_age = 0;
 
-    friend Net2;
+    bool maybeStarve();
+
+    int m_starvingTime = 0;
 };
 
 } // namespace Slither
