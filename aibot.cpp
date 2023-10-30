@@ -42,6 +42,7 @@ QString _32bitHexIntStr(uint64_t _i)
 }
 
 NeuralNet *__globalNet = nullptr;
+qreal __globalNet_fitness = 1;
 
 NeuralNet *globalNet()
 {
@@ -51,6 +52,22 @@ NeuralNet *globalNet()
     }
 
     return __globalNet;
+}
+
+void applyMutation(QPair<NeuralNet*, qreal> best)
+{
+    if(best.second < (__globalNet_fitness * .75)) // must reach at least 75% of the current highscore to get counted
+        return;
+
+    if(best.second > __globalNet_fitness) {// this one was better
+        __globalNet_fitness = best.second;
+        __globalNet->assign(best.first);
+        return;
+    }
+
+    qreal weightBest = best.second / __globalNet_fitness * .75;
+
+    __globalNet->crossover(best.first, weightBest);
 }
 
 }
@@ -97,7 +114,7 @@ bool comp(QPair<qreal, Snake*> a, QPair<qreal, Snake*> b)
     return a.first < b.first;
 }
 
-NeuralNet *getBestSnake(QList<Snake *> l)
+QPair<NeuralNet *, qreal> getBestSnake(QList<Snake *> l)
 {
     qInfo() << "getting best snake";
     QList<QPair<qreal, Snake*>> d = {};
@@ -114,7 +131,7 @@ NeuralNet *getBestSnake(QList<Snake *> l)
         }
 
     std::sort(d.begin(), d.end(), comp);
-    return const_cast<NeuralNet*>(reinterpret_cast<AiBot *> (d[0].second->bot())->net()); // ... yes long and messy code
+    return {const_cast<NeuralNet*>(reinterpret_cast<AiBot *> (d[0].second->bot())->net()), d[0].first}; // ... yes long and messy code
 }
 
 }
@@ -127,8 +144,8 @@ void AiBot::die()
     if(bestList.isEmpty())
         return;
 
-    NeuralNet *bestNet = getBestSnake(bestList);
-    globalNet()->crossover(bestNet);
+    auto bestNet = getBestSnake(bestList);
+    applyMutation(bestNet);
 }
 
 NeuralNet *AiBot::global()

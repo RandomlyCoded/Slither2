@@ -120,11 +120,11 @@ QList<qreal> NeuralNet::decide(QList<qreal> input)
     return ret;
 }
 
-void NeuralNet::crossover(NeuralNet *other)
+void NeuralNet::crossover(NeuralNet *other, qreal w)
 {
     qInfo() << "cossover";
     for(int i = 0; i < actualWeights.size(); ++i) {
-        actualWeights[i] = other->weights()[i] * 0.25 + actualWeights[i] * 0.75;
+        actualWeights[i] = other->weights()[i] * w + actualWeights[i] * (1 - w);
     }
 
     compileWeights();
@@ -158,6 +158,13 @@ void NeuralNet::load(QString filename)
 
     for(int i = 0; i < 10; ++i)
         ds >> actualWeights[i];
+
+    compileWeights();
+}
+
+void NeuralNet::assign(NeuralNet *other)
+{
+    actualWeights = other->weights();
 
     compileWeights();
 }
