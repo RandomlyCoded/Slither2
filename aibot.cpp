@@ -3,8 +3,6 @@
 #include "playground.h"
 #include "snake.h"
 
-#include <neuralnetviewprovider.h>
-
 #include <QFile>
 #include <QVector2D>
 #include <neuralnet.h>
@@ -50,7 +48,6 @@ NeuralNet *globalNet()
     if(Q_UNLIKELY(!__globalNet)) {
         __globalNet = new NeuralNet(9, 3, 3, 10);
         QString name = _32bitHexIntStr(std::uintptr_t(__globalNet));
-        NeuralNetViewProvider().requestNetView(__globalNet).save("globalNet-" + name + ".png", "png");
     }
 
     return __globalNet;
@@ -60,9 +57,9 @@ NeuralNet *globalNet()
 
 AiBot::AiBot(Snake *parent)
     : Bot(parent)
-    , m_net(globalNet()->clone())
+    , m_net(globalNet())
 {
-    m_net->mutate(0.5);
+    m_net->mutate(0.2);
 
     /********************************************
      * boosting                     ->  -> boosting
@@ -77,14 +74,18 @@ AiBot::AiBot(Snake *parent)
      *
      * left and right means how much it wants to go to wich side
      */
+
+    /*
     auto netAddr = (std::uintptr_t)m_net;
     QString name = _32bitHexIntStr(netAddr);
-    NeuralNetViewProvider().requestNetView(m_net).save(name + ".png", "png");
 
     auto f = new QFile(name + ".neuralNet");
     f->open(QFile::ReadWrite);
     QDataStream stream(f);
     stream << 1;
+    */
+
+    connect(parent, &Snake::died, this, &AiBot::die);
 //    stream << m_net;
 }
 
@@ -98,6 +99,7 @@ bool comp(QPair<qreal, Snake*> a, QPair<qreal, Snake*> b)
 
 NeuralNet *getBestSnake(QList<Snake *> l)
 {
+    qInfo() << "getting best snake";
     QList<QPair<qreal, Snake*>> d = {};
 
     for(Snake *s: l)
@@ -116,12 +118,19 @@ NeuralNet *getBestSnake(QList<Snake *> l)
 
 void AiBot::die()
 {
+    qInfo() << Q_FUNC_INFO;
+
     QList<Snake*> bestList = playground()->leaderboard()->leaderboard();
     if(bestList.isEmpty())
         return;
 
     NeuralNet *bestNet = getBestSnake(bestList);
     globalNet()->crossover(bestNet);
+}
+
+NeuralNet *AiBot::global()
+{
+    return globalNet();
 }
 
 void AiBot::act(qreal dt)
@@ -132,36 +141,42 @@ void AiBot::act(qreal dt)
 
     // data about yourself
     input.append(m_snake->boosting());
-    input.append(atan2(m_snake->direction().y(), m_snake->direction().x())); // we use radiants, since I don't want to convert them to degrees
+    input.append(atan2(m_snake->direction().y(), m_snake->direction().x()) / M_PI); // we use radiants, since I don't want to convert them to degrees
 
     // data about the border
-    input.append(playground()->size() - QVector2D(m_snake->position()).length()); // distance
+    input.append((playground()->size() - QVector2D(m_snake->position()).length()) / playground()->size()); // distance
 
     const auto borderRel = findBorder() - position();
-    input.append(atan2(borderRel.y(), borderRel.x())); // angle to border
+    input.append(atan2(borderRel.y(), borderRel.x()) / M_PI); // angle to border
+
 
     // data about the next food
-    input.append(playground()->size() - QVector2D(m_snake->position()).length()); // distance
 
     const auto nextFood = findNextFood();
     const auto foodRelPos = nextFood.position - position();
-    input.append(atan2(foodRelPos.y(), foodRelPos.x())); // angle
+
+    input.append(QVector2D(foodRelPos).length() / playground()->size()); // distance
+    input.append(atan2(foodRelPos.y(), foodRelPos.x()) / M_PI); // angle
 
     input.append(nextFood.amount); // value
 
-    // data about the border
-    input.append(playground()->size() - QVector2D(m_snake->position()).length()); // distance
+
+    // data about the closest snake segment
 
     const auto snakeSegRel = findNextSnakeSegment() - position();
-    input.append(atan2(snakeSegRel.y(), snakeSegRel.x())); // angle to segment
 
+    input.append(QVector2D(snakeSegRel).length() / playground()->size()); // distance
+    input.append(atan2(snakeSegRel.y(), snakeSegRel.x()) / M_PI); // angle to segment
+
+
+    // use the output
     auto output = m_net->decide(input);
 
-    m_snake->setBoosting(output[0] > 0);
+    m_snake->setBoosting(output[0] > 2);
 
-    m_snake->setDestination(m_snake->position() + QPointF{cos(output[2] - output[1]), sin(output[2] - output[1])});
+    m_snake->setDestination(m_snake->position() + QPointF{cos((output[2] - output[1]) * M_PI), sin((output[2] - output[1]) * M_PI)});
 
-    qInfo() << output;
+//    qInfo() << output;
 
 //    qInfo() << m_snake->destination() << m_snake->boosting();
 }

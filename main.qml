@@ -12,18 +12,18 @@ Window {
     property color normalColor: "red"
     property color speedColor: "#ff5555"
 
-    property int fps: 30
+    property real fps: 30
     property real zoom: 16
 
     property bool debugging: false
-    property bool speedHack: false
+    property bool speedHack: true
 
     property int backgroundAnimationSpeed: 20000
     property real frameDelay: 0
 
     property bool showLeaderboard: true
-    property bool showMinimap: true
-    property bool showDestinations: true
+    property bool showMinimap: false
+    property bool showDestinations: false
 
     width: 640
     height: 480
@@ -96,6 +96,14 @@ Window {
 
         Repeater {
             id: pearlView
+
+            Connections {
+                target: Playground
+
+                function onEnergyPearlsChanged() {
+                    
+                }
+            }
 
             model: Playground.energyPearls
 

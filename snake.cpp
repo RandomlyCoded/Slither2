@@ -16,6 +16,15 @@
 
 namespace Slither {
 
+namespace
+{
+
+auto rng = QRandomGenerator::global();
+
+int snakeCount = 0;
+
+} // namespace
+
 void Snake::setDestination(QPointF destination)
 {
     m_requestedDestination = destination;
@@ -92,6 +101,7 @@ Snake::Snake(QObject *parent)
     , m_size(1)
     , m_isAlive(false)
     , m_segments({QPointF(0, 0)})
+    , snakeIdx(snakeCount++)
 {
     init();
 }
@@ -128,12 +138,12 @@ Snake::Snake(ImportantData &d)
     m_size = 1;
     m_load = 0;
     m_length = 0;
+    snakeIdx = snakeCount++;
 }
 
 QList<EnergyPearl> Snake::die()
 {
     QList<EnergyPearl> pearls;
-    const auto rng = QRandomGenerator::global();
     for(int i = 0; i < m_segments.count(); i += m_size) {
         const QPointF &seg = m_segments[i];
         QColor clr = skinAt(i);

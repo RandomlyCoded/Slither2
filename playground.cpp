@@ -54,9 +54,7 @@ void Playground::initialize(qreal size)
     // update playground size if needed
     if (size == 0)
         size = m_size;
-//#ifdef QT_DEBUG // Debug: have a smaller playground for faster Debug-gameplay
-    size = 20;
-//#endif
+
     if (!qFuzzyCompare(m_size, size)) {
         m_size = size;
         emit sizeChanged(m_size);
@@ -82,12 +80,12 @@ void Playground::initialize(qreal size)
 
     // starting timer for new Snakes
     connect(m_newSnakeTimer, &QTimer::timeout, this, &Playground::spawnSnake);
-    m_newSnakeTimer->setInterval(1000); // oder immer wenn eine Stirbt spawnt eine neue? dann müssten wir aber hier einen for-loop einbauen
+    m_newSnakeTimer->setInterval(1000);
     m_newSnakeTimer->start();
 
     // starting timer for new Energy Pearls
     connect(m_energyTimer, &QTimer::timeout, this, &Playground::energyBoost);
-    m_energyTimer->setInterval(1000/30);
+    m_energyTimer->setInterval(1000/10);
     m_energyTimer->start();
 
     // if snakes changes, the total amount changes
@@ -107,19 +105,18 @@ bool Playground::checkBounds(Snake *snake) const
 
 qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
 {
-    bool hadToAddSnake = false;
-    if(eater == nullptr) {
-        eater = new Snake{this};
-        hadToAddSnake = true;
+    if(!eater) {
+        return 0;
     }
 
     qreal amount = 0;
 
+    // SLOW, maybe chunk system/adding all pearls & snakes to a quad tree first?
     for (int row = 0; row < m_energyPearls->rowCount(); ++row) {
         const auto index = m_energyPearls->index(row);
         const auto pearl = index.data(EnergyPearlListModel::DataRole).value<EnergyPearl>();
 
-        // check if close enough towards an pearl
+        // check if close enough to a pearl
         if (QVector2D{pearl.position - position}.length() > (eater->size() * 1.5) + pearl.amount)
             continue;
 
@@ -129,10 +126,7 @@ qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
 
     if(amount)
         emit energyPearlsChanged();
-    if(m_masshacksActive)
-        amount += eater->boosting() ? 0.6 * eater->size() : 0.2 * eater->size();
-    if(hadToAddSnake)
-        delete eater;
+
     return amount * (m_masshacksActive ? 2 : 1);
 }
 
@@ -173,7 +167,7 @@ qreal bounded(QRandomGenerator *rng, qreal lowest, qreal highest)
 QPointF get(const Playground *pg)
 {
     auto rng = QRandomGenerator::global();
-    auto r = pg->size() * bounded(rng, 0, 1); // QPointF(0, 0) is error code.
+    auto r = pg->size() * bounded(rng, .1, .8); // QPointF(0, 0) is error code.
     auto phi = 2 * M_PI * rng->bounded(1.);
 
     return QPointF{r * cos(phi), r * sin(phi)};
@@ -189,9 +183,9 @@ void Playground::spawnSnake()
     auto pos = get(this);
     auto dest = get(this);
     if(!checkBounds(pos)) {
-        uto v = QVector2D(pos);
+        auto v = QVector2D(pos);
         v.normalize();
-        v *= (m_size/2);
+        v *= (m_size/4);
 
         pos = v.toPointF();
     }
@@ -235,6 +229,9 @@ EnergyPearl Playground::spawnPearl() const
 
 EnergyPearl Playground::addPearl(QPointF position, qreal amount, QColor color, bool autoadd) const
 {
+    if(m_energyPearls->rowCount() > m_maxEnergyCount)
+        return {};
+
     EnergyPearl pearl;
     pearl.amount = amount;
     pearl.color = color;
@@ -286,6 +283,9 @@ void Playground::moveSnakes(qreal dt)
         sn->move(dt);
         checkCrash(sn);
     }
+
+    leaderboard()->reload();
+    emit leaderboardChanged();
 
     auto end = clock.now();
     std::chrono::nanoseconds _diff = (end - start);

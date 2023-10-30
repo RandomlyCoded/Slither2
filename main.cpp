@@ -1,8 +1,10 @@
+#include "aibot.h"
 #include "playground.h"
 #include "snake.h"
 #include "bot.h"
 #include "leaderboard.h"
 
+#include <QDateTime>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
@@ -40,6 +42,8 @@ int Application::run()
     const QUrl url{"qrc:/main.qml"};
 
     engine.load(url);
+
+    connect(this, &QGuiApplication::aboutToQuit, [=] { Slither::AiBot::global()->save(QDateTime::currentDateTime().toString("dd.MM.yyyy+hh.mm.ss") + ".neuralnet"); });
     return exec();
 }
 

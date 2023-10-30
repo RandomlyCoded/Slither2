@@ -33,6 +33,7 @@ bool compSnakes(Snake *a, Snake *b)
 
 void Leaderboard::setLeaderSnakes()
 {
+    qInfo() << "setting leaderboard";
     QList<Snake *> possibleSnakes = m_playground->snakes();
 
 /*    qInfo() << "before std::sort:";

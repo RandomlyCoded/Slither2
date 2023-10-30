@@ -33,6 +33,8 @@ public:
     const qreal age() const { return m_age; }
     const NeuralNet *net() const { return m_net; }
 
+    static NeuralNet *global();
+
 private:
     NeuralNet *m_net;
 

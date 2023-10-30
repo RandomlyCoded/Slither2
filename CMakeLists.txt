@@ -15,14 +15,15 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Quick REQUIRED)
 
 set(CMAKE_PREFIX_PATH C:/Users/Marc/Programmieren/Libs/NeuralNet)
 
-find_package(NeuralNet REQUIRED)
+#find_package(NeuralNet REQUIRED)
 
 add_library(Botdefs)
 
 target_link_libraries(
     Botdefs
     PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick
-    PRIVATE NeuralNet)
+#    PRIVATE NeuralNet
+)
 
 target_sources(
     Botdefs PRIVATE
@@ -34,6 +35,8 @@ target_sources(
     followmouse_bot.h followmouse_bot.cpp
     killing_bot.h killing_bot.cpp
     stupid_bot.h stupid_bot.cpp
+
+    neuralnet.h neuralnet.cpp
 
 #    NeuralNets/netBase.h NeuralNets/netBase.cpp
 #    NeuralNets/net1.h NeuralNets/net1.cpp
@@ -72,4 +75,5 @@ target_compile_definitions(Slither2
 target_link_libraries(Slither2
   PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick
   PRIVATE Botdefs
-  PRIVATE NeuralNet)
+#  PRIVATE NeuralNet
+)

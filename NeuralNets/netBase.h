@@ -4,7 +4,7 @@
 
 #define PERCENT / 100.0
 
-#include <NeuralNet>
+#include "neuralnet.h"
 #include <QObject>
 
 namespace Slither

@@ -84,7 +84,7 @@ public:
     QList<EnergyPearl> die();
 
     int size() const { return m_size; }
-    qreal length() const { return m_length + m_load; }
+    qreal length() const { return m_segments.length() * m_size + m_load; }
     QString lengthInfo() const;
 
     bool isAlive() const { return m_isAlive; }
@@ -116,7 +116,7 @@ public:
 
     QPointF lastSegment() const { return m_segments.last(); }
 
-    QString name() { return "Snake#kp"; }
+    QString name() { return QString("Snake#") + QString::number(snakeIdx); }
 
     using BotType = Bot::Type;
     BotType botType() { return m_bot->type(); }
@@ -161,6 +161,8 @@ signals:
     void lastSegmentChanged();
 
 private:
+    int snakeIdx;
+
     QPointer<Slither::Bot> m_bot;
     int m_size;
     bool m_isAlive = true;

@@ -214,11 +214,12 @@ private:
     QTimer *m_newSnakeTimer = new QTimer{this};
     QTimer *m_energyTimer = new QTimer{this};
 
-    qreal m_size = 200;
+    qreal m_size = 100;
     QList<Snake*> m_snakes;
     EnergyPearlListModel *const m_energyPearls = new EnergyPearlListModel{this};
 
     int m_maximumEnergy;
+    const int m_maxEnergyCount = 4000; // how many energy pearls can exist untill we do not add more from dying snakes or sprinting
 
     void energyBoost();
     int m_pearlAmount;
