@@ -88,6 +88,11 @@ void Playground::initialize(qreal size)
     m_energyTimer->setInterval(1000/10);
     m_energyTimer->start();
 
+    // start timer for ticking the playground
+    connect(m_tickTimer, &QTimer::timeout, [this] {this->moveSnakes(0.1); });
+    m_tickTimer->setInterval(5);
+    m_tickTimer->start();
+
     // if snakes changes, the total amount changes
     connect(this, &Playground::snakesChanged, this, &Playground::totalSnakesSizeChanged);
     if(!m_snakes.isEmpty())

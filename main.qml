@@ -186,12 +186,12 @@ Window {
             }
         }
 
-        CheckBox {
+/*        CheckBox {
             checked: timer.running
             text: "<- Run\t"
 
             onToggled: timer.running ^= true
-        }
+        }*/
 
         CheckBox {
             checked: snake.useBot
@@ -224,7 +224,7 @@ Window {
         }
     }
 
-    Timer {
+/*    Timer {
         id: timer
 
         repeat: true
@@ -240,14 +240,14 @@ Window {
 
         onTriggered: {
             let currentTick = now();
-            let dt = (currentTick - lastTick/*get time passes*/) / 1000;
+            let dt = (currentTick - lastTick) / 1000;
             lastTick = currentTick;
             frameDelay = dt
 
             Playground.moveSnakes(speedHack ? .1 : dt);
             leaderboardView.reload()
         }
-    }
+    }*/
 
     Item {
         anchors.fill: parent
@@ -273,9 +273,9 @@ Window {
             case Qt.Key_D: {
                 debugging = !debugging
             } break;
-            case Qt.Key_R: {
-                timer.running = !timer.running
-            } break;
+//            case Qt.Key_R: {
+//                timer.running = !timer.running
+//            } break;
             case Qt.Key_Save: {
                 Playground.save()
             } break;

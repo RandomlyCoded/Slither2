@@ -213,6 +213,7 @@ signals:
 private:
     QTimer *m_newSnakeTimer = new QTimer{this};
     QTimer *m_energyTimer = new QTimer{this};
+    QTimer *m_tickTimer = new QTimer{this};
 
     qreal m_size = 100;
     QList<Snake*> m_snakes;
