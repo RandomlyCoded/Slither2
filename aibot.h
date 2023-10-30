@@ -32,6 +32,8 @@ public:
 
     static NeuralNet *global();
 
+    const int starvation() { return m_starvingTime; }
+
 private:
     NeuralNet *m_net;
 

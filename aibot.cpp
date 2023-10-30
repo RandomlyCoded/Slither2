@@ -107,11 +107,14 @@ NeuralNet *getBestSnake(QList<Snake *> l)
             qreal value = 0;
             value += reinterpret_cast<AiBot *>(s->bot())->age();
             value += s->length();
+
+            value -= reinterpret_cast<AiBot *>(s->bot())->starvation();
+
             d += QPair<qreal, Snake*>(value, s);
         }
 
     std::sort(d.begin(), d.end(), comp);
-    return const_cast<NeuralNet*>(reinterpret_cast<AiBot *>(d[0].second->bot())->net()); // ... yes long and messy code
+    return const_cast<NeuralNet*>(reinterpret_cast<AiBot *> (d[0].second->bot())->net()); // ... yes long and messy code
 }
 
 }
@@ -139,20 +142,23 @@ bool AiBot::maybeStarve()
 
     const int maxTime = 500; // tweak this
 
+    bool ret = false;
+
     if(prevLen >= snake()->length()) {
         ++m_starvingTime;
 
         if(m_starvingTime >= maxTime) {
             playground()->killSnake(snake());
-            return true;
+            ret = true;
         }
     }
     else { // the snake grew
-        if(m_starvingTime > 0)
-            --m_starvingTime;
+        m_starvingTime = 0;
     }
 
-    return false;
+    prevLen = snake()->length();
+
+    return ret;
 }
 
 void AiBot::act(qreal dt)
