@@ -1,7 +1,33 @@
 #include "neuralnet.h"
 
+#include <QDebug>
 #include <QFile>
 #include <QRandomGenerator>
+
+namespace
+{
+
+template<int N, int M>
+void printMatrix(QGenericMatrix<N, M, qreal> m, QDebug &dbg, int fw = 15)
+{
+    QDebugStateSaver saver(dbg);
+    dbg.nospace() << "QGenericMatrix<" << N << ", " << M
+        << ", " << QMetaType::fromType<qreal>().name()
+        << ">(" << Qt::endl << qSetFieldWidth(fw);
+    for (int row = 0; row < M; ++row) {
+        for (int col = 0; col < N; ++col)
+            dbg << m(row, col);
+        dbg << Qt::endl;
+    }
+    dbg << qSetFieldWidth(0) << ')';
+}
+
+inline constexpr qreal sigmoid(qreal x)
+{
+    return 1. / (1 + std::pow(M_E, -x));
+}
+
+} // namespace
 
 NeuralNet::NeuralNet(int i, int o, int l, int c)
 {
@@ -11,7 +37,9 @@ NeuralNet::NeuralNet(int i, int o, int l, int c)
     Q_UNUSED(c)
 
     for(int i = 0; i < 10; ++i) {
-        QGenericMatrix<10, 1, qreal> w;
+        QGenericMatrix<10, 10, qreal> w;
+
+        w *= 0; // set all values to 0
 
         for(int j = 0; j < 10; ++j) {
             qreal v = QRandomGenerator::global()->generateDouble() * 4 - 1;
@@ -19,7 +47,8 @@ NeuralNet::NeuralNet(int i, int o, int l, int c)
             w(0, j) = v;
         }
 
-        qInfo() << w;
+//        QDebug d = qInfo();
+//        printMatrix(w, d);
 
         actualWeights.append(w);
     }
@@ -48,49 +77,44 @@ void NeuralNet::mutate(qreal mr)
     compileWeights();
 }
 
-template<int N, int M>
-void printMatrix(QGenericMatrix<N, M, qreal> m, QDebug &dbg, int fw = 15)
-{
-    QDebugStateSaver saver(dbg);
-    dbg.nospace() << "QGenericMatrix<" << N << ", " << M
-        << ", " << QMetaType::fromType<qreal>().name()
-        << ">(" << Qt::endl << qSetFieldWidth(fw);
-    for (int row = 0; row < M; ++row) {
-        for (int col = 0; col < N; ++col)
-            dbg << m(row, col);
-        dbg << Qt::endl;
-    }
-    dbg << qSetFieldWidth(0) << ')';
-}
-
 QList<qreal> NeuralNet::decide(QList<qreal> input)
 {
-    static QGenericMatrix<1, 10, qreal> shrink {
-        new qreal[] {
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-        }
-    };
+    QGenericMatrix<10, 10, qreal> inMat;
 
-    auto inMat = QGenericMatrix<1, 10, qreal>(input.data());
+    inMat *= 0; // clear all data
 
-    auto res = inMat * compiledWeights;
+    for(int i = 0; i < 10; ++i) {
+        if(i >= input.length())
+            inMat(0, i) = 1;
+        else
+        inMat(0, i) = input[i];
+    }
 
-    auto d = (res * shrink).data();
+    auto res = compiledWeights * inMat;
 
     auto ret = QList<qreal> {
-        d[0] * 1/3. + d[1] * 1/3. + d[2] * 1/3.,
-        d[3] * 1/3. + d[4] * 1/3. + d[5] * 1/3.,
-        d[6] * 1/3. + d[7] * 1/3. + d[8] * 1/3.,
+        (res(0, 0) + res(0, 1)) / 3., // boosting ?
+        (res(0, 2) + res(0, 3) + res(0, 4) + res(0, 5)) / 4., // turning 1
+        (res(0, 6) + res(0, 7) + res(0, 8) + res(0, 9)) / 4.  // turning 2
     };
 
 #define DEBUG_PRINT_DECISIONS 0
 
 #if DEBUG_PRINT_DECISIONS
-    auto dbg = qInfo();
-    printMatrix(res, dbg);
-    printMatrix(res * shrink, dbg);
+    auto deb = qInfo();
 
-    dbg << input << "->" << ret << Qt::endl;
+    printMatrix(inMat, deb);
+    deb << Qt::endl;
+
+    printMatrix(compiledWeights, deb);
+    deb << Qt::endl;
+
+    printMatrix(res, deb);
+    deb << Qt::endl;
+
+    deb << ret;
+
+    deb.~QDebug();
 #endif // DEBUG_PRINT_DECISIONS
 
     return ret;
@@ -140,16 +164,18 @@ void NeuralNet::load(QString filename)
 
 void NeuralNet::compileWeights()
 {
-    auto compileData = QGenericMatrix<10, 10, qreal>();
+    compiledWeights *= 0; // reset
 
-    for(auto &w: actualWeights) {
-        auto tmp = QGenericMatrix<10, 10, qreal>();
-        for(int i = 0; i < 10; ++i)
-            tmp(i, i) = w(0, i);
-
-        compileData = compileData * tmp;
-    }
-
+    // pre set values to 1 so multiplication works
     for(int i = 0; i < 10; ++i)
-        compiledWeights(0, i) = compileData(i, i);
+        compiledWeights(0, i) = 1;
+
+    // mulitply the matricies to get a "compiled" matrix
+    for(auto &w: actualWeights) {
+        compiledWeights = w * compiledWeights;
+
+        // apply the sigmoid function to each weight
+        for(int i = 0; i < 10; ++i)
+            compiledWeights(0, i) = sigmoid(compiledWeights(0, 1));
+    }
 }

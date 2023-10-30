@@ -20,8 +20,8 @@ public:
     void load(QString filename);
 
 private:
-    QList<QGenericMatrix<10, 1, qreal>> actualWeights;
-    QGenericMatrix<10, 1, qreal> compiledWeights;
+    QList<QGenericMatrix<10, 10, qreal>> actualWeights;
+    QGenericMatrix<10, 10, qreal> compiledWeights;
 
     void compileWeights();
 };
