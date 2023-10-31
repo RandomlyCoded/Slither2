@@ -24,7 +24,12 @@ void printMatrix(QGenericMatrix<N, M, qreal> m, QDebug &dbg, int fw = 15)
 
 inline constexpr qreal sigmoid(qreal x)
 {
-    return 1. / (1 + std::pow(M_E, -x));
+    return 1. / (1 + std::pow(M_E, -x)) * 2 - 1;
+}
+
+inline qreal rng()
+{
+    return QRandomGenerator::global()->generateDouble() * 2 - 1;
 }
 
 } // namespace
