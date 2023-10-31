@@ -40,11 +40,14 @@ Snake *Bot::snake()
 EnergyPearl Bot::findNextFood()
 {
     auto energyPearls = playground()->energyPearls();
+    qreal dist = qInf();
     auto pearl = energyPearls->at(0);
 
     for(int i = 0; i < energyPearls->rowCount(); i++) {
-        if(QVector2D(energyPearls->at(i).position - position()).length() < QVector2D(pearl.position - position()).length())
+        if(QVector2D(energyPearls->at(i).position - position()).length() < dist) {
             pearl = energyPearls->at(i);
+            dist = QVector2D(energyPearls->at(i).position - position()).length();
+        }
     }
 
     return pearl;
