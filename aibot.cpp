@@ -76,7 +76,7 @@ AiBot::AiBot(Snake *parent)
     : Bot(parent)
     , m_net(globalNet())
 {
-    m_net->mutate(0.2);
+    m_net->mutate(0.5);
 
     /********************************************
      * boosting                     ->  -> boosting
