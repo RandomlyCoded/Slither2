@@ -23,7 +23,7 @@ public:
     void assign(NeuralNet *other);
 
 private:
-    QList<QGenericMatrix<10, 10, qreal>> actualWeights;
+    QList<QGenericMatrix<10, 11, qreal>> actualWeights;
     QGenericMatrix<10, 10, qreal> compiledWeights;
 
     void compileWeights();

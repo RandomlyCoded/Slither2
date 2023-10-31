@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QRandomGenerator>
 
+#define DEBUG_PRINT_DECISIONS 0
+
 namespace
 {
 
@@ -41,24 +43,73 @@ NeuralNet::NeuralNet(int i, int o, int l, int c)
     Q_UNUSED(l)
     Q_UNUSED(c)
 
-    for(int i = 0; i < 10; ++i) {
-        QGenericMatrix<10, 10, qreal> w;
+    QGenericMatrix<10, 11, qreal> l1;
 
-        w *= 0; // set all values to 0
 
-        for(int j = 0; j < 10; ++j) {
-            qreal v = QRandomGenerator::global()->generateDouble() * 4 - 1;
+    // generate the weights
+    for(int j = 0; j < 10; ++j) {
+        qreal v = rng();
 
-            w(0, j) = v;
-        }
-
-//        QDebug d = qInfo();
-//        printMatrix(w, d);
-
-        actualWeights.append(w);
+        // fill the column with the weights
+        for(int y = 0; y < 9; ++y)
+            l1(y, j) = v;
     }
 
-    qInfo();
+    // add the bias into the last row
+    for(int j = 0; j < 10; ++j) {
+        qreal v = rng();
+
+        l1(9, j) = v;
+    }
+
+    actualWeights.append(l1); // add the input as the first "layer"
+
+    // generate the remaining layers
+    for(int i = 0; i < 10; ++i) {
+        QGenericMatrix<10, 11, qreal> w;
+
+        // generate the weights
+        for(int j = 0; j < 10; ++j) {
+            qreal v = rng();
+
+            // fill the column with the weights
+            for(int y = 0; j < 10; ++j)
+                l1(y, j) = v;
+        }
+
+        // add the bias into the last row
+        for(int j = 0; j < 10; ++j) {
+            qreal v = rng();
+
+            l1(10, j) = v;
+        }
+
+        actualWeights.append(w); // add the layer
+    }
+
+    // finally, we need a "layer" with 3 weights to shrink the result into the final shape
+
+    QGenericMatrix<10, 11, qreal> out;
+
+    out *= 0; // remove all the 1's of the identity
+
+    // generate the weights
+    for(int j = 0; j < 3; ++j) {
+        qreal v = rng();
+
+        // fill the column with the weights
+        for(int y = 0; y < 10; ++y)
+            out(y, j) = v;
+    }
+
+    // add the bias into the last row
+    for(int j = 0; j < 3; ++j) {
+        qreal v = rng();
+
+        out(10, j) = v;
+    }
+
+    actualWeights.append(out); // add the input as the first "layer"
 
     compileWeights();
 }
@@ -67,59 +118,72 @@ void NeuralNet::mutate(qreal mr)
 {
     int layer = QRandomGenerator::global()->bounded(actualWeights.length());
     int idx = QRandomGenerator::global()->bounded(10);
+    bool bias = QRandomGenerator::global()->bounded(1); // 0 or 1
 
     qInfo() << "mutating" << layer << idx;
 
-     qreal off = actualWeights[layer](0, idx) + QRandomGenerator::global()->generateDouble() * mr - 0.5 * mr;
+     qreal off = actualWeights[layer](bias ? 10 : 0, idx) + rng() * mr;
 
      if(off < -2)
          off = -2;
      if(off > 2)
          off = 2;
 
-     actualWeights[layer](0, idx) = off;
+     if(bias)
+         actualWeights[layer](10, idx) = off;
+
+     else {
+         // we need to change an entire column
+        for(int i = 0; i < 10; ++i)
+            actualWeights[layer](i, idx) = off;
+     }
 
     compileWeights();
 }
 
 QList<qreal> NeuralNet::decide(QList<qreal> input)
 {
-    QGenericMatrix<10, 10, qreal> inMat;
+    QGenericMatrix<11, 1, qreal> inMat;
 
     inMat *= 0; // clear all data
 
+#if DEBUG_PRINT_DECISIONS
+    auto deb = qInfo();
+#endif // DEBUG_PRINT_DECISIONS
+
+    // move the input data to the matrix
     for(int i = 0; i < 10; ++i) {
         if(i >= input.length())
-            inMat(0, i) = 1;
+            inMat(0, i) = 0;
         else
         inMat(0, i) = input[i];
     }
 
-    auto res = compiledWeights * inMat;
-
-    auto ret = QList<qreal> {
-        (res(0, 0) + res(0, 1)) / 3., // boosting ?
-        (res(0, 2) + res(0, 3) + res(0, 4) + res(0, 5)) / 4., // turning 1
-        (res(0, 6) + res(0, 7) + res(0, 8) + res(0, 9)) / 4.  // turning 2
-    };
-
-#define DEBUG_PRINT_DECISIONS 0
+    inMat(0, 10) = 1; // bias multiplier
 
 #if DEBUG_PRINT_DECISIONS
-    auto deb = qInfo();
-
     printMatrix(inMat, deb);
     deb << Qt::endl;
+#endif // DEBUG_PRINT_DECISIONS
 
-    printMatrix(compiledWeights, deb);
-    deb << Qt::endl;
+    for(auto w: actualWeights) {
+        auto res = inMat * w;
 
-    printMatrix(res, deb);
-    deb << Qt::endl;
+#if DEBUG_PRINT_DECISIONS
+        printMatrix(res, deb);
+        deb << Qt::endl;
+#endif // DEBUG_PRINT_DECISIONS
 
+        for(int i = 0; i < 10; ++i) // the bias at 0/10 is kept
+            inMat(0, i) = sigmoid(res(0, i)); // copy the values and apply the sigmoid function
+    }
+
+    auto d = inMat.data();
+
+    QList<qreal> ret(d, d + 3);
+
+#if DEBUG_PRINT_DECISIONS
     deb << ret;
-
-    deb.~QDebug();
 #endif // DEBUG_PRINT_DECISIONS
 
     return ret;
@@ -176,6 +240,10 @@ void NeuralNet::assign(NeuralNet *other)
 
 void NeuralNet::compileWeights()
 {
+    /*
+     * I changed the architecture of the nets, now I dont really know how to pre multiply them
+     */
+
     compiledWeights *= 0; // reset
 
     // pre set values to 1 so multiplication works
@@ -184,7 +252,7 @@ void NeuralNet::compileWeights()
 
     // mulitply the matricies to get a "compiled" matrix
     for(auto &w: actualWeights) {
-        compiledWeights = w * compiledWeights;
+//        compiledWeights = w * compiledWeights;
 
         // apply the sigmoid function to each weight
         for(int i = 0; i < 10; ++i)
