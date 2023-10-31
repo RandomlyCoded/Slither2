@@ -157,14 +157,12 @@ bool AiBot::maybeStarve()
 {
     static qreal prevLen = snake()->length();
 
-    const int maxTime = 500; // tweak this
-
     bool ret = false;
 
     if(prevLen >= snake()->length()) {
         ++m_starvingTime;
 
-        if(m_starvingTime >= maxTime) {
+        if(m_starvingTime >= maxStarvation) {
             playground()->killSnake(snake());
             ret = true;
         }
@@ -218,6 +216,8 @@ void AiBot::act(qreal dt)
     input.append(QVector2D(snakeSegRel).length() / playground()->size()); // distance
     input.append(atan2(snakeSegRel.y(), snakeSegRel.x()) / M_PI - a); // angle to segment
 
+    // also inform about starvation, also to get changing input to prevent circling
+    input.append(1 - m_starvingTime / (maxStarvation / 2.));
 
     // use the output
     auto output = m_net->decide(input);

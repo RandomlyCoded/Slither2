@@ -42,6 +42,7 @@ private:
     bool maybeStarve();
 
     int m_starvingTime = 0;
+    const int maxStarvation = 500;
 };
 
 } // namespace Slither
