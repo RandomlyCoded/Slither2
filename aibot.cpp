@@ -190,7 +190,7 @@ void AiBot::act(qreal dt)
     const qreal a = atan2(m_snake->direction().y(), m_snake->direction().x()); // the angle the snake is currently facing, calculate it here so we can use it faster
 
     // data about yourself
-    input.append(m_snake->boosting());
+    input.append(m_snake->boosting() ? 1 : 0);
     input.append(atan2(m_snake->direction().y(), m_snake->direction().x()) / M_PI - a); // we use radiants, since I don't want to convert them to degrees
 
     // data about the border
@@ -222,7 +222,7 @@ void AiBot::act(qreal dt)
     // use the output
     auto output = m_net->decide(input);
 
-    m_snake->setBoosting(output[0] > 2);
+    m_snake->setBoosting(output[0] > 0);
 
     m_snake->setDestination(m_snake->position() + QPointF{cos((output[2] - output[1]) * M_PI + a), sin((output[2] - output[1]) * M_PI + a)});
 }
