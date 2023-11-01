@@ -1,11 +1,11 @@
 #include "playground.h"
 #include "snake.h"
 
-#include "aibot.h"
+#include "../Botdefs/aibot.h"
+#include "../Botdefs/neuralnet.h"
 
 #include <QDebug>
 #include <QFile>
-#include <neuralnet.h>
 
 namespace Slither {
 

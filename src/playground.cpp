@@ -1,7 +1,7 @@
 #include "playground.h"
 
 #include "snake.h"
-#include "bot.h"
+#include "../Botdefs/bot.h"
 #include "leaderboard.h"
 
 #include <QRandomGenerator>

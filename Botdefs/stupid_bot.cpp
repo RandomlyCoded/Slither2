@@ -1,7 +1,7 @@
 #include "stupid_bot.h"
 
-#include "snake.h"
-#include "playground.h"
+#include "../src/snake.h"
+#include "../src/playground.h"
 
 namespace Slither {
 

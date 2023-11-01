@@ -1,7 +1,7 @@
 #include "aibot.h"
 
-#include "playground.h"
-#include "snake.h"
+#include "../src/playground.h"
+#include "../src/snake.h"
 
 #include <QFile>
 #include <QVector2D>

@@ -1,5 +1,5 @@
 #include "bot.h"
-#include "snake.h"
+#include "../src/snake.h"
 
 #include <QRandomGenerator>
 #include <QDebug>

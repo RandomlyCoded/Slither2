@@ -1,7 +1,7 @@
 #include "snake.h"
 
 #include "playground.h"
-#include "Bots"
+#include "../Botdefs/Bots"
 
 #include <QDebug>
 #include <QVector2D>

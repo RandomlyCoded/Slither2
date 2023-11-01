@@ -1,6 +1,6 @@
 #include "killing_bot.h"
 
-#include "snake.h"
+#include "../src/snake.h"
 #include "stupid_bot.h"
 
 namespace Slither

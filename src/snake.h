@@ -1,7 +1,7 @@
 #ifndef SLITHER_SNAKE_H
 #define SLITHER_SNAKE_H
 
-#include "bot.h"
+#include "../Botdefs/bot.h"
 #include "playground.h"
 
 #include <QColor>

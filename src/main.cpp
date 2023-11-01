@@ -1,7 +1,9 @@
-#include "aibot.h"
+#include "../Botdefs/aibot.h"
+#include "../Botdefs/bot.h"
+#include "../Botdefs/neuralnet.h"
+
 #include "playground.h"
 #include "snake.h"
-#include "bot.h"
 #include "leaderboard.h"
 
 #include <QDateTime>

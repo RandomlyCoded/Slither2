@@ -1,5 +1,5 @@
 #include "eating_bot.h"
-#include "snake.h"
+#include "../src/snake.h"
 
 namespace Slither
 {
