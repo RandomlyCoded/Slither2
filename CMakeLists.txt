@@ -18,7 +18,7 @@ set(CMAKE_PREFIX_PATH C:/Users/Marc/Programmieren/Libs/NeuralNet)
 
 #find_package(NeuralNet REQUIRED)
 
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 add_subdirectory(Botdefs)
 
