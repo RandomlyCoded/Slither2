@@ -1,0 +1,9 @@
+// header file to include all bot types at once
+
+#include "bot.h"
+
+#include "aibot.h"
+#include "eating_bot.h"
+#include "followmouse_bot.h"
+#include "killing_bot.h"
+#include "stupid_bot.h"

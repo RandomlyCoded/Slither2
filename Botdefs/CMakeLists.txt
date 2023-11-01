@@ -9,6 +9,8 @@ target_sources(
     Botdefs PRIVATE
     bot.h bot.cpp
 
+    Bots
+
     aibot.h aibot.cpp
     eating_bot.h eating_bot.cpp
     followmouse_bot.h followmouse_bot.cpp
