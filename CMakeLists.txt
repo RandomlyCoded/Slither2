@@ -14,10 +14,6 @@ enable_testing()
 
 find_package(Qt6 COMPONENTS Core Quick Test REQUIRED)
 
-set(CMAKE_PREFIX_PATH C:/Users/Marc/Programmieren/Libs/NeuralNet)
-
-#find_package(NeuralNet REQUIRED)
-
 #add_subdirectory(tests)
 
 add_subdirectory(Botdefs)
@@ -41,5 +37,4 @@ target_compile_definitions(Slither2
 target_link_libraries(Slither2
   PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick
   PRIVATE Botdefs
-#  PRIVATE NeuralNet
 )
