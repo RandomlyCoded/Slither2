@@ -1,8 +1,6 @@
 #ifndef SLITHER_AIBOT_H
 #define SLITHER_AIBOT_H
 
-#include "NeuralNets/netBase.h"
-
 #include "bot.h"
 
 #include <QDebug>
@@ -22,8 +20,6 @@ public:
     void act(qreal dt) override;
 
     Type type() override { return Bot_Intelligent; }
-
-    using NetType = NetBase::Type;
 
     void die();
 
