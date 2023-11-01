@@ -185,17 +185,15 @@ void AiBot::act(qreal dt)
 
     QList<qreal> input;
 
-    const qreal a = atan2(m_snake->direction().y(), m_snake->direction().x()); // the angle the snake is currently facing, calculate it here so we can use it faster
-
     // data about yourself
     input.append(m_snake->boosting() ? 1 : 0);
-    input.append(atan2(m_snake->direction().y(), m_snake->direction().x()) / M_PI - a); // we use radiants, since I don't want to convert them to degrees
+    input.append(atan2(m_snake->direction().y(), m_snake->direction().x()) / M_PI); // we use radiants, since I don't want to convert them to degrees
 
     // data about the border
     input.append((playground()->size() - QVector2D(m_snake->position()).length()) / playground()->size()); // distance
 
     const auto borderRel = findBorder() - position();
-    input.append(atan2(borderRel.y(), borderRel.x()) / M_PI - a); // angle to border
+    input.append(atan2(borderRel.y(), borderRel.x()) / M_PI); // angle to border
 
 
     // data about the next food
@@ -204,7 +202,7 @@ void AiBot::act(qreal dt)
     const auto foodRelPos = nextFood.position - position();
 
     input.append(QVector2D(foodRelPos).length() / playground()->size()); // distance
-    input.append(atan2(foodRelPos.y(), foodRelPos.x()) / M_PI - a); // angle
+    input.append(atan2(foodRelPos.y(), foodRelPos.x()) / M_PI); // angle
 
     input.append(nextFood.amount); // value
 
@@ -214,7 +212,7 @@ void AiBot::act(qreal dt)
     const auto snakeSegRel = findNextSnakeSegment() - position();
 
     input.append(QVector2D(snakeSegRel).length() / playground()->size()); // distance
-    input.append(atan2(snakeSegRel.y(), snakeSegRel.x()) / M_PI - a); // angle to segment
+    input.append(atan2(snakeSegRel.y(), snakeSegRel.x()) / M_PI); // angle to segment
 
     // also inform about starvation, also to get changing input to prevent circling
     input.append(1 - m_starvingTime / (maxStarvation / 2.));
@@ -224,7 +222,7 @@ void AiBot::act(qreal dt)
 
     m_snake->setBoosting(output[0] > 0);
 
-    m_snake->setDestination(m_snake->position() + QPointF{cos((output[2] - output[1]) * M_PI + a), sin((output[2] - output[1]) * M_PI + a)});
+    m_snake->setDestination(m_snake->position() + QPointF{cos((output[2] - output[1]) * M_PI), sin((output[2] - output[1]) * M_PI)});
 }
 
 } // namespace Slither
