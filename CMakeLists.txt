@@ -24,8 +24,9 @@ add_subdirectory(Botdefs)
 
 qt_add_executable(
     Slither2 WIN32
-    qml/assets.qrc
-    qml/pendants.qrc
+    assets/assets.qrc
+    assets/pendants.qrc
+
     qml/qml.qrc
 
     src/leaderboard.cpp src/leaderboard.h
