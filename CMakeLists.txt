@@ -23,18 +23,26 @@ qt_add_executable(
     assets/assets.qrc
     assets/pendants.qrc
 
+    src/main.cpp
+)
+
+qt_add_library(Slither2-Core
     qml/qml.qrc
 
     src/leaderboard.cpp src/leaderboard.h
-    src/main.cpp
     src/playground.cpp src/playground.h
     src/snake.cpp src/snake.h
     src/playground_savestreams.cpp
+)
+
+target_link_libraries(
+    Slither2-Core
+    PRIVATE Qt::Core Qt::Quick Botdefs
 )
 
 target_compile_definitions(Slither2
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(Slither2
   PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick
-  PRIVATE Botdefs
+  PRIVATE Slither2-Core
 )
