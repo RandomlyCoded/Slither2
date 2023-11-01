@@ -1,10 +1,10 @@
 <RCC>
     <qresource prefix="/assets">
-        <file>assets/IconChrismas.svg</file>
-        <file>assets/IconEaster.svg</file>
-        <file>assets/IconHalloween.svg</file>
-        <file>assets/IconSummer.svg</file>
-        <file>assets/arrow.svg</file>
-        <file>assets/Minimap-icon.svg</file>
+        <file>IconChrismas.svg</file>
+        <file>IconEaster.svg</file>
+        <file>IconHalloween.svg</file>
+        <file>IconSummer.svg</file>
+        <file>arrow.svg</file>
+        <file>Minimap-icon.svg</file>
     </qresource>
 </RCC>

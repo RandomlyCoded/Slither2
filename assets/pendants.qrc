@@ -1,12 +1,12 @@
 <RCC>
     <qresource prefix="/">
-        <file>assets/pendants/Burger.svg</file>
-        <file>assets/pendants/Cherry.svg</file>
-        <file>assets/pendants/Ice-Creme.svg</file>
-        <file>assets/pendants/Minecraft.svg</file>
-        <file>assets/pendants/OoT.svg</file>
-        <file>assets/pendants/PommesFrites.svg</file>
-        <file>assets/pendants/Triforce.svg</file>
-        <file>assets/pendants/Zelda.svg</file>
+        <file>pendants/Burger.svg</file>
+        <file>pendants/Cherry.svg</file>
+        <file>pendants/Ice-Creme.svg</file>
+        <file>pendants/Minecraft.svg</file>
+        <file>pendants/OoT.svg</file>
+        <file>pendants/PommesFrites.svg</file>
+        <file>pendants/Triforce.svg</file>
+        <file>pendants/Zelda.svg</file>
     </qresource>
 </RCC>
