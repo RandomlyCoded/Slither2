@@ -302,12 +302,8 @@ void Playground::moveSnakes(qreal dt)
     auto end = clock.now();
     std::chrono::nanoseconds _diff = (end - start);
     qreal diff = _diff.count() * 1. / (std::nano::den / std::milli::den); // nano -> ms
+
     m_tickDelay = diff;
-    /*qInfo() << "start:"   << start.time_since_epoch().count() <<
-               "\tend:"   << end.time_since_epoch().count() <<
-               "\tcount:" << _diff.count() <<
-               "\tdiff:"  << diff << "ms" <<
-               "\tdelay:" << m_tickDelay;*/
     emit tickDelayChanged();
 }
 
