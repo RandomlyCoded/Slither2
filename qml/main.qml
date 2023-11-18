@@ -208,12 +208,6 @@ Window {
         }
 
         CheckBox {
-            checked: Playground.checkChrash
-            text: "<- check chrash\t"
-            onToggled: Playground.checkChrash ^= 1
-        }
-
-        CheckBox {
             checked: speedHack
             text: "<- speed Hack\t"
             onToggled: speedHack ^= 1

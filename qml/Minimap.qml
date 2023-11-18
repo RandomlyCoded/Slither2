@@ -29,7 +29,7 @@ Rectangle {
     Repeater {
         model: Playground.snakes
         Image {
-            source: "qrc:/assets/assets/Minimap-icon.svg"
+            source: "qrc:/assets/Minimap-icon.svg"
             x: modelData.position.x + minimap.width/2
             y: modelData.position.y + minimap.height/2
             width: modelData.size + 3
