@@ -152,7 +152,7 @@ private:
     QPointer<Leaderboard> m_leaderboard;
     QList<Snake*> m_snakes;
     EnergyPearlListModel *const m_energyPearls = new EnergyPearlListModel{this};
-    ChunkHandler *const m_chunkHandler = new ChunkHandler{};
+    ChunkHandler *const m_chunkHandler = new ChunkHandler{this};
 
     int m_maximumEnergy;
     int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
