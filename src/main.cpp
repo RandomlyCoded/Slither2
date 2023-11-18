@@ -31,14 +31,17 @@ int Application::run()
 {
     setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
-    setWindowIcon(QIcon("qrc:/icon/Slither2.ico"));
+    setWindowIcon(QIcon {"qrc:/icon/Slither2.ico"});
+
     qmlRegisterUncreatableType<Slither::EnergyPearl>("Slither", 1, 0, "energyPerl", "This is a value type");
     qmlRegisterType<Slither::Snake>("Slither", 1, 0, "Snake");
 
     Slither::Playground *playground = new Slither::Playground(this);
-    Slither::Leaderboard *leaderboard = new Slither::Leaderboard(playground);
     qmlRegisterSingletonInstance<Slither::Playground>("Slither", 1, 0, "Playground", playground);
+
+    Slither::Leaderboard *leaderboard = new Slither::Leaderboard(playground);
     qmlRegisterSingletonInstance<Slither::Leaderboard>("Slither", 1, 0, "Leaderboard", leaderboard);
+
     QQmlApplicationEngine engine;
 
     const QUrl url{"qrc:/main.qml"};
