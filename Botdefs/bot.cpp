@@ -50,7 +50,7 @@ EnergyPearl Bot::findNextFood()
         }
     }
 
-    qInfo() << pearl.position << position();
+//    qInfo() << pearl.position << position();
 
     return pearl;
 }

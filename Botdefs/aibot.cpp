@@ -116,7 +116,7 @@ bool comp(QPair<qreal, Snake*> a, QPair<qreal, Snake*> b)
 
 QPair<NeuralNet *, qreal> getBestSnake(QList<Snake *> l)
 {
-    qInfo() << "getting best snake";
+//    qInfo() << "getting best snake";
     QList<QPair<qreal, Snake*>> d = {};
 
     for(Snake *s: l)
@@ -138,7 +138,7 @@ QPair<NeuralNet *, qreal> getBestSnake(QList<Snake *> l)
 
 void AiBot::die()
 {
-    qInfo() << Q_FUNC_INFO;
+//    qInfo() << Q_FUNC_INFO;
 
     QList<Snake*> bestList = playground()->leaderboard()->leaderboard();
     if(bestList.isEmpty())

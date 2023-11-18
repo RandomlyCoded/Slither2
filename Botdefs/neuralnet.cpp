@@ -123,7 +123,7 @@ void NeuralNet::mutate(qreal mr)
         int idx = QRandomGenerator::global()->bounded(10);
         bool bias = QRandomGenerator::global()->bounded(1); // 0 or 1
 
-        qInfo() << "mutating" << layer << idx;
+//        qInfo() << "mutating" << layer << idx;
 
         qreal off = actualWeights[layer](bias ? 10 : 0, idx) + rng() * mr;
 
@@ -186,7 +186,7 @@ QList<qreal> NeuralNet::decide(QList<qreal> input)
 
     QList<qreal> ret(d, d + 3);
 
-    qInfo() << input << ret;
+//    qInfo() << input << ret;
 
 #if DEBUG_PRINT_DECISIONS
     deb << ret;
