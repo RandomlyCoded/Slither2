@@ -31,8 +31,6 @@ int Application::run()
 {
     setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
-    setWindowIcon(QIcon {"qrc:/icon/Slither2.ico"});
-
     qmlRegisterUncreatableType<Slither::EnergyPearl>("Slither", 1, 0, "energyPerl", "This is a value type");
     qmlRegisterType<Slither::Snake>("Slither", 1, 0, "Snake");
 
