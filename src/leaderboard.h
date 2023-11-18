@@ -22,7 +22,7 @@ public:
     QList<Snake *> leaderboard();
 
     void reload();
-    void setPlayground(Slither::Playground *newPlayground) { m_playground = newPlayground; }
+    void setPlayground(Slither::Playground *newPlayground);
 
 signals:
     void leaderboardChanged();

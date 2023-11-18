@@ -18,6 +18,7 @@ namespace {
 
 Playground::Playground(QObject *parent)
     : QObject(parent)
+    , m_snakes({})
     , m_leaderboard(new Leaderboard(this))
 {
     connect(this, &Playground::snakesChanged, m_leaderboard, &Leaderboard::reload);

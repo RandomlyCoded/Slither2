@@ -23,9 +23,14 @@ void Leaderboard::reload()
     setLeaderSnakes();
 }
 
+void Leaderboard::setPlayground(Playground *newPlayground)
+{
+    m_playground = newPlayground;
+}
+
 void Leaderboard::init()
 {
-    setLeaderSnakes();
+    m_leaderSnakes = {};
 }
 
 bool compSnakes(Snake *a, Snake *b)
