@@ -31,6 +31,8 @@ qt_add_library(Slither2-Core
 
     src/leaderboard.cpp src/leaderboard.h
     src/playground.cpp src/playground.h
+    src/datamodel.h src/datamodel.cpp
+    src/chunk.h src/chunk.cpp
     src/snake.cpp src/snake.h
     src/playground_savestreams.cpp
 )
