@@ -15,7 +15,21 @@ namespace Slither {
 
 namespace {
 
+qreal bounded(QRandomGenerator *rng, qreal lowest, qreal highest)
+{
+    return rng->bounded(highest - lowest) + lowest;
 }
+
+QPointF get(const Playground *pg)
+{
+    auto rng = QRandomGenerator::global();
+    auto r = pg->size() * bounded(rng, .1, .8); // QPointF(0, 0) is error code.
+    auto phi = 2 * M_PI * rng->bounded(1.);
+
+    return QPointF{r * cos(phi), r * sin(phi)};
+}
+
+} // namespace
 
 Playground::Playground(QObject *parent)
     : QObject(parent)
@@ -164,24 +178,6 @@ void Playground::killSnake(Snake *snake)
         m_energyPearls->add(p);
 }
 
-namespace {
-
-qreal bounded(QRandomGenerator *rng, qreal lowest, qreal highest)
-{
-    return rng->bounded(highest - lowest) + lowest;
-}
-
-QPointF get(const Playground *pg)
-{
-    auto rng = QRandomGenerator::global();
-    auto r = pg->size() * bounded(rng, .1, .8); // QPointF(0, 0) is error code.
-    auto phi = 2 * M_PI * rng->bounded(1.);
-
-    return QPointF{r * cos(phi), r * sin(phi)};
-}
-
-}
-
 void Playground::spawnSnake()
 {
     if(m_snakes.length() >= m_maxSnakeAmt)
@@ -272,18 +268,27 @@ void Playground::energyBoost()
     emit energyPearlsChanged();
 }
 
+void Playground::initializeChunkGrid()
+{
+    const int chunkAmt = qCeil(m_size / Chunk::ChunkSize);
+
+    m_chunkHandler->init(chunkAmt);
+}
+
 void Playground::moveSnakes(qreal dt)
 {
     auto clock = std::chrono::high_resolution_clock();
     auto start = clock.now();
-    for(const auto sn: m_snakes) {
-        if(!checkBounds(sn)) {
+
+    for (const auto sn: m_snakes) {
+        if (!checkBounds(sn)) {
             deleteSnake(sn);
             continue;
         }
-        if(sn->useBot()) {
+
+        if (sn->useBot()) {
             auto b = sn->bot();
-            if(!b)
+            if (!b)
                 continue;
             b->act(dt);
         }

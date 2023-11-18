@@ -154,6 +154,7 @@ public:
 
     constexpr const static qreal boostSpeed  = 10;
     constexpr const static qreal normalSpeed =  5;
+
     bool checkBounds(Snake *snake) const;
 
     bool masshacks() const { return m_masshacksActive; }
@@ -213,24 +214,30 @@ signals:
     void tickDelayChanged();
 
 private:
+    void energyBoost();
+    void initializeChunkGrid();
+
+    qreal m_size = 100;
+
     QTimer *m_newSnakeTimer = new QTimer{this};
     QTimer *m_energyTimer = new QTimer{this};
     QTimer *m_tickTimer = new QTimer{this};
 
-    qreal m_size = 100;
+    QPointer<Leaderboard> m_leaderboard;
     QList<Snake*> m_snakes;
     EnergyPearlListModel *const m_energyPearls = new EnergyPearlListModel{this};
+    ChunkHandler *const m_chunkHandler = new ChunkHandler{};
 
     int m_maximumEnergy;
-    const int m_maxEnergyCount = 4000; // how many energy pearls can exist untill we do not add more from dying snakes or sprinting
-
-    void energyBoost();
+    int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
     int m_pearlAmount;
     int m_snakeCount;
-    bool m_masshacksActive = 0;
-    QPointer<Leaderboard> m_leaderboard;
-    int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
+
     qreal m_tickDelay;
+
+    const int m_maxEnergyCount = 4000; // how many energy pearls can exist untill we do not add more from dying snakes or sprinting
+
+    bool m_masshacksActive = 0;
 };
 
 
