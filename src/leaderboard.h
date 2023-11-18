@@ -4,10 +4,10 @@
 #include <QObject>
 #include <QPointer>
 
-#include "playground.h"
-#include "snake.h"
-
 namespace Slither {
+
+class Playground;
+class Snake;
 
 class Leaderboard : public QObject
 {

@@ -2,6 +2,8 @@
 #define SLITHER_PLAYGROUND_H
 
 #include "leaderboard.h"
+#include "datamodel.h"
+#include "chunk.h"
 
 #include <QAbstractListModel>
 #include <QColor>
