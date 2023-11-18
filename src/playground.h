@@ -38,7 +38,7 @@ public:
     EnergyPearlListModel(EnergyPearlListModel &other) { m_rows = other.m_rows; }
 };
 
-class SnakeListModel : public DataListModel<EnergyPearl>
+class SnakeListModel : public DataListModel<Snake *>
 {
     Q_OBJECT;
 
