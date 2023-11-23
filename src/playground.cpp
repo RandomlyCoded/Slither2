@@ -23,7 +23,7 @@ qreal bounded(QRandomGenerator *rng, qreal lowest, qreal highest)
 QPointF get(const Playground *pg)
 {
     auto rng = QRandomGenerator::global();
-    auto r = pg->size() * bounded(rng, .1, .8); // QPointF(0, 0) is error code.
+    auto r = pg->size() * bounded(rng, .1, .8);
     auto phi = 2 * M_PI * rng->bounded(1.);
 
     return QPointF{r * cos(phi), r * sin(phi)};
@@ -32,14 +32,16 @@ QPointF get(const Playground *pg)
 } // namespace
 
 Playground::Playground(QObject *parent)
+    : Playground(100, parent)
+{
+    initialize(0);
+}
+
+Playground::Playground(qreal size, QObject *parent)
     : QObject(parent)
     , m_snakes({})
     , m_leaderboard(new Leaderboard(this))
-{
-    connect(this, &Playground::snakesChanged, m_leaderboard, &Leaderboard::reload);
-    connect(this, &Playground::totalSnakesSizeChanged, m_leaderboard, &Leaderboard::reload);
-    initialize(0);
-}
+{}
 
 bool Playground::checkCrash(Snake *toCheck)
 {
@@ -80,16 +82,16 @@ void Playground::initialize(qreal size)
     const auto area = M_PI * size * size;
     const auto count = qRound(area / (m_size * 1/4));
 
+    initializeChunkGrid();
+
     m_maximumEnergy = count;
 
     // let's create new pearls
-    QList<EnergyPearl> pearls;
-    pearls.reserve(count);
+    for (int i = 0; i < count; ++i) {
+        auto pearl = spawnPearl();
 
-    for (int i = 0; i < count; ++i)
-        pearls += spawnPearl();
-
-    m_energyPearls->reset(std::move(pearls));
+        m_chunkHandler->tryAdd(pearl);
+    }
 
     // init m_snakes
     m_snakes = {};
@@ -105,7 +107,7 @@ void Playground::initialize(qreal size)
     m_energyTimer->start();
 
     // start timer for ticking the playground
-    connect(m_tickTimer, &QTimer::timeout, [this] {this->moveSnakes(0.1); });
+    connect(m_tickTimer, &QTimer::timeout, [this] {this->tick(0.1); });
     m_tickTimer->setInterval(5);
     m_tickTimer->start();
 
@@ -130,25 +132,7 @@ qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
         return 0;
     }
 
-    qreal amount = 0;
-
-    // SLOW, maybe chunk system/adding all pearls & snakes to a quad tree first?
-    for (int row = 0; row < m_energyPearls->rowCount(); ++row) {
-        const auto index = m_energyPearls->index(row);
-        const auto pearl = index.data(EnergyPearlListModel::DataRole).value<EnergyPearl>();
-
-        // check if close enough to a pearl
-        if (QVector2D{pearl.position - position}.length() > (eater->size() * 1.5) + pearl.amount)
-            continue;
-
-        amount += pearl.amount;
-        m_energyPearls->remove(index);
-    }
-
-    if(amount)
-        emit energyPearlsChanged();
-
-    return amount * (m_masshacksActive ? 2 : 1);
+    return m_chunkHandler->findChunk(position).consumeNearbyPearls(eater);
 }
 
 void Playground::addSnake(Snake *snake)
@@ -175,7 +159,7 @@ void Playground::killSnake(Snake *snake)
 
     auto deathpearls = snake->die();
     for(auto p: deathpearls)
-        m_energyPearls->add(p);
+        addPearl(p);
 }
 
 void Playground::spawnSnake()
@@ -200,20 +184,6 @@ void Playground::spawnSnake()
     emit snakesChanged(m_snakes);
 }
 
-void Playground::deleteSnake(Snake *snake)
-{
-    if(!snake)
-        return;
-    if(!snake->isAlive())
-        return;
-
-    const int killedSnake = m_snakes.indexOf(snake);
-    snake->disconnect(this);
-    m_snakes.removeAt(killedSnake);
-    emit snakesChanged(m_snakes);
-    snake->die();
-}
-
 EnergyPearl Playground::spawnPearl() const
 {
     const auto rng = QRandomGenerator::global();
@@ -230,59 +200,49 @@ EnergyPearl Playground::spawnPearl() const
     return pearl;
 }
 
-EnergyPearl Playground::addPearl(QPointF position, qreal amount, QColor color, bool autoadd) const
+EnergyPearl Playground::createPearl(QPointF position, qreal amount, QColor color)
 {
-    if(m_energyPearls->rowCount() > m_maxEnergyCount)
-        return {};
-
     EnergyPearl pearl;
     pearl.amount = amount;
     pearl.color = color;
     pearl.position = position;
-    if(autoadd)
-        m_energyPearls->add(pearl);
     return pearl;
+}
+
+void Playground::addPearl(const EnergyPearl &p)
+{
+    m_chunkHandler->findChunk(p.position).maybeAddPearl(p);
 }
 
 void Playground::energyBoost()
 {
-    const auto pearlAmount = m_energyPearls->rowCount();
+    const auto pearlAmount = m_maximumEnergy; //m_energyPearls->rowCount();
 
     const auto toSpawn = m_maximumEnergy - pearlAmount;
 
-    QList<EnergyPearl> existingPearls;
-    existingPearls.reserve(m_energyPearls->rowCount());
-    for(int i = 0; i < m_energyPearls->rowCount(); i++)
-        existingPearls += m_energyPearls->at(i);
-
-    QList<EnergyPearl> pearls;
-    pearls.reserve(toSpawn);
-
     for (int i = 0; i < toSpawn; ++i)
-        pearls += spawnPearl();
-
-    existingPearls += pearls;
-
-    m_energyPearls->reset(std::move(existingPearls));
+        addPearl(spawnPearl());
 
     emit energyPearlsChanged();
 }
 
 void Playground::initializeChunkGrid()
 {
-    const int chunkAmt = qCeil(m_size / Chunk::ChunkSize);
+    const int chunkAmt = qCeil(m_size / Chunk::ChunkSize) + 1;
+
+    qInfo() << "initializing" << chunkAmt << "chunks";
 
     m_chunkHandler->init(chunkAmt);
 }
 
-void Playground::moveSnakes(qreal dt)
+void Playground::tick(qreal dt)
 {
     auto clock = std::chrono::high_resolution_clock();
     auto start = clock.now();
 
     for (const auto sn: m_snakes) {
         if (!checkBounds(sn)) {
-            deleteSnake(sn);
+            killSnake(sn);
             continue;
         }
 
@@ -292,6 +252,7 @@ void Playground::moveSnakes(qreal dt)
                 continue;
             b->act(dt);
         }
+
         sn->move(dt);
         checkCrash(sn);
     }
@@ -299,12 +260,14 @@ void Playground::moveSnakes(qreal dt)
     leaderboard()->reload();
     emit leaderboardChanged();
 
+    m_chunkHandler->updateBufferedPearls();
+
     auto end = clock.now();
     std::chrono::nanoseconds _diff = (end - start);
     qreal diff = _diff.count() * 1. / (std::nano::den / std::milli::den); // nano -> ms
 
-    m_tickDelay = diff;
-    emit tickDelayChanged();
+    m_lastMspt = diff;
+    emit previousMsptChanged();
 }
 
 Leaderboard *Playground::leaderboard() const
@@ -312,9 +275,9 @@ Leaderboard *Playground::leaderboard() const
     return m_leaderboard;
 }
 
-qreal Playground::tickDelay() const
+qreal Playground::previousMspt() const
 {
-    return m_tickDelay;
+    return m_lastMspt;
 }
 
 } // namespace Slither

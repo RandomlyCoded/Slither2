@@ -22,7 +22,7 @@ Item {
             startX: currentSnake.position.x * zoom
             startY: currentSnake.position.y * zoom
             PathPolyline {
-                path: Playground.zoomOut(currentSnake.segments, zoom)
+                path: Playground.scaleToZoom(currentSnake.segments, zoom)
             }
         }
     }

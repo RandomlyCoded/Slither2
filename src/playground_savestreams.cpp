@@ -97,10 +97,6 @@ void Playground::save()
 
     // now the enery pearls
     // write the amount
-    stream << m_energyPearls->rowCount();
-    for(auto &p: *m_energyPearls)
-        stream << p;
-
     /*
      *    8 bytes playground size
      *
@@ -136,7 +132,6 @@ void Playground::load(QString filename)
     QDataStream stream{&saveFile};
 
     m_snakes.clear();
-    m_energyPearls->reset();
 
     stream >> m_size;
 
@@ -156,7 +151,6 @@ void Playground::load(QString filename)
     for(int i = 0; i < ePAmt; i++) {
         EnergyPearl p;
         stream >> p;
-        m_energyPearls->add(p);
     }
 
     emit snakesChanged(m_snakes);

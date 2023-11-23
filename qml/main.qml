@@ -30,8 +30,6 @@ Window {
     visible: true
     visibility: Window.Maximized
 
-//    flags: Qt.Sheet
-
     Snake {
         id: snake
 
@@ -41,6 +39,7 @@ Window {
         boosting: mouseArea.pressed && snake.canBoost
 
         skin: ["#ff0000", "#ff7f00", "yellow", "limegreen", "cyan", "blue", "#6a006a"];
+
         useBot: false
     }
 
@@ -60,7 +59,7 @@ Window {
         readonly property point center: Qt.point(width/2, height/2)
         property int i: 0
 
-        color: Playground.color(i)
+        color: Playground.rgbFromHue(i)
 
         NumberAnimation on i {
             id: bgAnimation
@@ -70,13 +69,14 @@ Window {
             loops: Animation.Infinite
         }
 
-        radius: Playground.size * zoom
 
         x: (main.width - width)/2   - (snake.position.x * zoom)
         y: (main.height - height)/2 - (snake.position.y * zoom)
-        width: radius * 2
 
+        width: radius * 2
         height: radius * 2
+
+        radius: Playground.size * zoom
 
         border.color: "red"
 
@@ -134,14 +134,9 @@ Window {
         }
     }
 
-    Arrow {
-        position: Qt.point(playgroundView.x + (Playground.size + snake.position.x) * zoom,
-                           playgroundView.y + (Playground.size + snake.position.y) * zoom)
-        direction: snake.direction
-    }
-
     Row {
         spacing: 1
+
         Button {
             text: "Spawn"
             font.pixelSize: 12
@@ -151,6 +146,7 @@ Window {
                     Playground.killSnake(snake)
                     console.info("snake lived so killed it")
                 }
+
                 snake.spawn(Qt.point(10, 10), Qt.point(0, 0));
                 Playground.addSnake(snake); // FIXME: _maybe_ rewrite into Playground.spawnSnake() ?
                 snake.setBotType(Snake.FollowMouse)
@@ -182,16 +178,9 @@ Window {
 
             onClicked: {
                 Playground.load()
-                console.info("loaded game")
+                console.info("loading is not implemented yet")
             }
         }
-
-/*        CheckBox {
-            checked: timer.running
-            text: "<- Run\t"
-
-            onToggled: timer.running ^= true
-        }*/
 
         CheckBox {
             checked: snake.useBot
@@ -200,53 +189,16 @@ Window {
             onToggled: snake.changeBotUsing()
         }
 
-        CheckBox {
-            checked: Playground.masshacks
-            text: "<- masshacks active\t"
-
-            onToggled: Playground.switch_masshacks()
-        }
-
-        CheckBox {
-            checked: speedHack
-            text: "<- speed Hack\t"
-            onToggled: speedHack ^= 1
-        }
-
         Text {
             text: "your length: <b>" + snake.length + "</b>"
         }
     }
 
-/*    Timer {
-        id: timer
-
-        repeat: true
-        interval: 1000/fps
-        running: true
-
-        property real lastTick: now()
-
-        function now() {
-            return new Date().getTime();
-        }
-
-
-        onTriggered: {
-            let currentTick = now();
-            let dt = (currentTick - lastTick) / 1000;
-            lastTick = currentTick;
-            frameDelay = dt
-
-            Playground.moveSnakes(speedHack ? .1 : dt);
-            leaderboardView.reload()
-        }
-    }*/
-
     Item {
         anchors.fill: parent
         focus: true
         onFocusChanged: !focus ? focus = true : 0
+
         Keys.onPressed: (event) => {
             switch(event.key) {
             case Qt.Key_S: {
@@ -260,19 +212,20 @@ Window {
             case Qt.Key_K: {
                 Playground.killSnake(snake)
             } break;
+
             case Qt.Key_B: {
                 snake.changeBotUsing()
             } break;
+
             case Qt.Key_F3:
             case Qt.Key_D: {
                 debugging = !debugging
             } break;
-//            case Qt.Key_R: {
-//                timer.running = !timer.running
-//            } break;
+
             case Qt.Key_Save: {
                 Playground.save()
             } break;
+
             case Qt.Key_F11: {
                 console.info("F11")
                 if(main.visibility === Window.Maximized) {
@@ -284,12 +237,11 @@ Window {
                     console.info("maximizing")
                 }
             } break;
+
             case Qt.Key_N: {
                 console.info("nggyu ._.")
             } break;
-            case Qt.Key_M: {
-                Playground.switch_masshacks();
-            } break;
+
             } // switch
         }
     }
@@ -314,6 +266,7 @@ Window {
         color: "transparent"
         border.color: "#ff0000"
     }
+
     LeaderboardView {
         id: leaderboardView
         x: parent.width - width

@@ -12,6 +12,28 @@ Chunk::Chunk(QPoint coords)
     m_energyPearls = new EnergyPearlListModel;
 }
 
+Chunk::Chunk(const Chunk &rhs)
+{
+    m_coords = rhs.m_coords;
+    m_snakes = rhs.m_snakes;
+    m_energyPearls = rhs.m_energyPearls;
+}
+
+Chunk::Chunk(Chunk &&rhs)
+    : m_coords(rhs.m_coords)
+    , m_snakes(rhs.m_snakes)
+    , m_energyPearls(rhs.m_energyPearls)
+{}
+
+Chunk &Chunk::operator=(const Chunk &rhs)
+{
+    m_coords = rhs.m_coords;
+    m_snakes = rhs.m_snakes;
+    m_energyPearls = rhs.m_energyPearls;
+
+    return *this;
+}
+
 bool Chunk::maybeAddSnake(Snake *sn)
 {
     const auto chunkCoords = sn->position() / ChunkSize;
@@ -24,11 +46,9 @@ bool Chunk::maybeAddSnake(Snake *sn)
     return false;
 }
 
-bool Chunk::maybeAddPearl(EnergyPearl &p)
+bool Chunk::maybeAddPearl(const EnergyPearl &p)
 {
-    const auto chunkCoords = p.position / ChunkSize;
-
-    if(checkBounds(chunkCoords)) {
+    if(checkBounds(p.position)) {
         m_energyPearls->add(p);
         return true;
     }
@@ -38,19 +58,47 @@ bool Chunk::maybeAddPearl(EnergyPearl &p)
 
 qreal Chunk::consumeNearbyPearls(const Snake *sn)
 {
-    Q_ASSERT_X(false, Q_FUNC_INFO, "not implemented yet");
+    qreal amount = 0;
 
-    return -1;
+    for (int row = 0; row < m_energyPearls->rowCount(); ++row) {
+        const auto index = m_energyPearls->index(row);
+        const auto pearl = index.data(EnergyPearlListModel::DataRole).value<EnergyPearl>();
+
+        // check if close enough to a pearl
+        if (QVector2D{pearl.position - sn->position()}.length() > (sn->size() * 1.5) + pearl.amount)
+            continue;
+
+        amount += pearl.amount;
+        m_energyPearls->remove(index);
+    }
+
+    return amount;
 }
 
 bool Chunk::checkBounds(const QPointF &pos) const
 {
-    return (pos.x() > m_coords.x() && pos.x() < m_coords.x() + ChunkSize)
-           && (pos.y() > m_coords.y() && pos.y() < m_coords.y() + ChunkSize);
+    return checkY(pos.y()) && checkX(pos.x());
+}
+
+bool Chunk::checkY(const qreal y) const
+{
+    auto lowerBound = (m_coords.y() * ChunkSize);
+    bool lowerOk = y >= lowerBound;
+
+    auto upperBound = lowerBound + ChunkSize;
+    bool upperOk = y < upperBound;
+
+    return lowerOk && upperOk;
+}
+
+bool Chunk::checkX(const qreal x) const
+{
+    return x >= (m_coords.x() * ChunkSize) && x < ((m_coords.x() * ChunkSize) + ChunkSize);
 }
 
 ChunkHandler::ChunkHandler(Playground *pg)
     : m_playground (pg)
+    , m_bufferedPearls(new EnergyPearlListModel())
 {
     offset = m_playground->size() / Chunk::ChunkSize;
 }
@@ -59,35 +107,64 @@ void ChunkHandler::init(int chunksEachDir)
 {
     reset();
 
-    offset = m_playground->size() / Chunk::ChunkSize;
+    offset = chunksEachDir;
 
-    for(int y = 0; y < chunksEachDir; ++y) {
+    for(int y = -chunksEachDir; y <= chunksEachDir; ++y) {
         QList<Chunk> row;
 
-        for(int x = 0; x < chunksEachDir; ++x)
-            row.emplaceBack(QPoint{x - offset, y - offset});
+        for(int x = -chunksEachDir; x <= chunksEachDir; ++x)
+            row.emplaceBack(QPoint{x, y});
 
         m_chunks.append(row);
     }
 }
 
-Chunk &ChunkHandler::chunk(int cx, int cy)
+Chunk &ChunkHandler::findChunk(QPointF pos)
 {
-    return m_chunks[cy][cx];
+    for(auto &row: m_chunks) {
+//        qInfo() << "y" << row[0].coords().y() << pos.y() / Chunk::ChunkSize;
+        if(!row[0].checkY(pos.y()))
+            continue;
+
+        for(auto &c: row) {
+//            qInfo() << "x" << c.coords().x() << pos.x() / Chunk::ChunkSize;
+            if(c.checkBounds(pos))
+                return c;
+        }
+    }
+
+    qInfo() << "did not find chunk for" << pos;
+    qFatal("exiting");
 }
 
-QPoint ChunkHandler::chunkCoordinates(QPoint realCoords)
+bool ChunkHandler::tryAdd(EnergyPearl p)
 {
-    return realCoords / Chunk::ChunkSize;
+    return findChunk(p.position).maybeAddPearl(p);
 }
 
-bool ChunkHandler::exits(int cx, int cy) const
+bool ChunkHandler::tryAdd(Snake *s)
 {
-    const auto x = cx + offset;
-    const auto y = cy + offset;
-    return (x > 0 && x < m_chunks[0].size())
-           && (y > 0 && y < m_chunks.size());
+    return findChunk(s->position()).maybeAddSnake(s);
 }
+
+void ChunkHandler::updateBufferedPearls()
+{
+    QList<EnergyPearl> pearls;
+
+    for (const auto &row: m_chunks)
+        for(const auto &chunk: row)
+            pearls.append(chunk.energyPearls()->rows());
+
+    m_bufferedPearls->reset(pearls);
+}
+
+//bool ChunkHandler::exits(int cx, int cy) const
+//{
+//    const auto x = cx + offset;
+//    const auto y = cy + offset;
+//    return (x > 0 && x < m_chunks[0].size())
+//           && (y > 0 && y < m_chunks.size());
+//}
 
 void ChunkHandler::reset()
 {

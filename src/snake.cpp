@@ -262,7 +262,7 @@ void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen ve
             for (m_load += energy; m_load > 0; --m_load)
                 m_segments.append(m_segments.last());
 
-            if((length() / m_size) > 200)
+            if ((length() / m_size) > 200)
                 emit sizeChanged(++m_size);
 
             emit segmentsChanged(m_segments);
@@ -272,18 +272,20 @@ void Snake::move(qreal dt) // steht "dt" für "duration"? bitte LESBARE Namen ve
 
     const auto motion = dp * speed() * dt;
     m_segments[0] += motion.toPointF()/* * angle*/;
-    if(m_speed == m_playground->boostSpeed) {
-        if(m_load < 0.2) {
+
+    if (m_speed == m_playground->boostSpeed) {
+        if (m_load < 0.2) {
             m_segments.removeLast();
             m_load += 1;
         }
-        m_playground->addPearl(m_segments.last(), 0.2, skinAt(m_segments.indexOf(m_segments.last())), true);
+
+        m_playground->addPearl(Playground::createPearl(m_segments.last(), 0.2, skinAt(m_segments.indexOf(m_segments.last()))));
         m_load -= 0.2;
     }
 
     for (int i = 1; i < m_segments.count(); ++i) {
         m_segments[i] += (QVector2D{m_segments[i - 1] - m_segments[i]} * speed() * dt).toPointF();
-        if(!m_playground->checkBounds(m_segments[i]) && (m_segments[i] != position()))
+        if (!m_playground->checkBounds(m_segments[i]) && (m_segments[i] != position()))
             m_segments[i] = m_segments[i - 1];
     }
 

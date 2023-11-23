@@ -39,7 +39,7 @@ Rectangle {
         Text {
             id: tickInfo
             property var tickDelayBuffer: []
-            text: `${parent.slidingAvg(tickDelayBuffer, Playground.tickDelay).toFixed(1)} ms per tick`
+            text: `${parent.slidingAvg(tickDelayBuffer, Playground.previousMspt).toFixed(1)} ms per tick`
         }
 
         Text {

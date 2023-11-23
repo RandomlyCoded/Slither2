@@ -32,6 +32,8 @@ public: // QAbstractItemModel interface
     bool setData(const QModelIndex &index, const QVariant &data, int role = DataRole) override;
     QHash<int, QByteArray> roleNames() const override { return {{DataRole, "data"}}; }
 
+    QList<T> &rows() { return m_rows; }
+
 protected:
     QList<T> m_rows;
 };

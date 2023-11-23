@@ -17,6 +17,13 @@ class Bot;
 class Snake;
 class Leaderboard;
 
+namespace Tests
+{
+
+class ChunkTest;
+
+} // needs forward declaration to add a friend
+
 struct EnergyPearl
 {
     qreal amount;
@@ -58,69 +65,61 @@ class Playground : public QObject
     Q_PROPERTY(int pearlAmount READ pearlAmount NOTIFY energyPearlsChanged FINAL)
     Q_PROPERTY(int totalSnakesSize READ totalSnakesSize NOTIFY totalSnakesSizeChanged FINAL)
 
-    Q_PROPERTY(bool masshacks READ masshacks NOTIFY masshacksChanged FINAL)
-
     Q_PROPERTY(Leaderboard *leaderboard READ leaderboard NOTIFY leaderboardChanged FINAL)
 
-    Q_PROPERTY(qreal tickDelay READ tickDelay NOTIFY tickDelayChanged FINAL)
+    Q_PROPERTY(qreal previousMspt READ previousMspt NOTIFY previousMsptChanged FINAL)
 
 public:
     Playground(QObject *parent = nullptr);
+
     qreal size() const noexcept { return m_size; }
-    EnergyPearlListModel *energyPearls() const { return m_energyPearls; }
+
+    EnergyPearlListModel *energyPearls() const { return m_chunkHandler->bufferedPearls(); }
     QList<Snake*> snakes() const { return m_snakes; };
 
     bool checkCrash(Snake *toCheck);
 
     int snakeCount() const { return m_snakes.count(); }
 
-    int pearlAmount() const { return m_energyPearls->rowCount(); }
+    int pearlAmount() const { return EnergyPearlCap; }
 
     int totalSnakesSize() const;
 
-    constexpr const static qreal boostSpeed  = 10;
-    constexpr const static qreal normalSpeed =  5;
-
-    bool checkBounds(Snake *snake) const;
-
-    bool masshacks() const { return m_masshacksActive; }
+    constexpr static qreal boostSpeed  = 10;
+    constexpr static qreal normalSpeed =  5;
 
     Leaderboard *leaderboard() const;
 
-    qreal tickDelay() const;
+    qreal previousMspt() const;
 
 public slots:
-    void tp()
-    {
-        for(auto &p: *m_energyPearls)
-            p.position = QPointF(0, 0);
-    }
-    void switch_masshacks() { m_masshacksActive ^= 1; }
     void initialize(qreal size);
 
     bool checkBounds(QPointF position) const;
+    bool checkBounds(Snake *snake) const;
+
     qreal consumeNearbyPearls(QPointF position, const Snake *eater = nullptr);
 
     void addSnake(Snake *snake);
     void killSnake(Snake *snake);
     void spawnSnake();
-    void deleteSnake(Snake *snake);
 
     EnergyPearl spawnPearl() const;
-    EnergyPearl addPearl(QPointF position = {0, 0}, qreal amount = 1, QColor color = "#7f7f7f",
-                         bool autoadd = false) const;
+    static EnergyPearl createPearl(QPointF position = {0, 0}, qreal amount = 1, QColor color = "#7f7f7f");
 
-    QColor color(int H) { return QColor::fromHsv(H, 100, 100); }
+    void addPearl(const EnergyPearl &p);
+
+    QColor rgbFromHue(int hue) { return QColor::fromHsv(hue, 100, 100); }
 
     void save();
     void load();
     void load(QString filename);
 
-    void moveSnakes(qreal dt);
+    void tick(qreal dt);
 
     int indexOfSnake(Slither::Snake *snake) { return m_snakes.indexOf(snake); }
 
-    QList<QPointF> zoomOut(QList<QPointF> positions, int zoom)
+    QList<QPointF> scaleToZoom(QList<QPointF> positions, int zoom)
     { QList<QPointF> ret; for(const auto &pos: positions) ret += (pos * zoom); return ret; }
 
 signals:
@@ -133,15 +132,16 @@ signals:
 
     void totalSnakesSizeChanged();
 
-    void masshacksChanged();
-
     void leaderboardChanged();
 
-    void tickDelayChanged();
+    void previousMsptChanged();
 
 private:
     void energyBoost();
     void initializeChunkGrid();
+    void setSize(qreal newSize) { m_size = newSize; }
+
+    Playground(qreal size, QObject *parent = nullptr);
 
     qreal m_size = 100;
 
@@ -151,19 +151,16 @@ private:
 
     QPointer<Leaderboard> m_leaderboard;
     QList<Snake*> m_snakes;
-    EnergyPearlListModel *const m_energyPearls = new EnergyPearlListModel{this};
     ChunkHandler *const m_chunkHandler = new ChunkHandler{this};
 
     int m_maximumEnergy;
     int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
-    int m_pearlAmount;
-    int m_snakeCount;
 
-    qreal m_tickDelay;
+    qreal m_lastMspt;
 
-    const int m_maxEnergyCount = 4000; // how many energy pearls can exist untill we do not add more from dying snakes or sprinting
+    constexpr static int EnergyPearlCap = 4000; // how many energy pearls can exist untill we do not add more from dying snakes or sprinting
 
-    bool m_masshacksActive = 0;
+    friend class Tests::ChunkTest;
 };
 
 
