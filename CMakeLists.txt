@@ -14,7 +14,7 @@ enable_testing()
 
 find_package(Qt6 COMPONENTS Core Quick Test REQUIRED)
 
-#add_subdirectory(tests)
+add_subdirectory(tests)
 
 add_subdirectory(Botdefs)
 
