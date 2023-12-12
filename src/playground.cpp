@@ -134,7 +134,20 @@ qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
         return 0;
     }
 
-    return m_chunkHandler->findChunk(position)->consumeNearbyPearls(eater);
+    qreal amount = 0;
+
+    // also check surrounding chunks
+    for(int xOff = -1; xOff < 1; ++xOff) {
+        for(int yOff = -1; yOff < 1; ++yOff) {
+            auto chunk = m_chunkHandler->findChunk(position + QPoint{xOff * Chunk::ChunkSize, yOff * Chunk::ChunkSize});
+            if(!chunk) // chunk does not exist
+                continue;
+
+            amount += chunk->consumeNearbyPearls(eater);
+        }
+    }
+
+    return amount;
 }
 
 void Playground::addSnake(Snake *snake)

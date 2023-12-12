@@ -128,8 +128,8 @@ Chunk *ChunkHandler::findChunk(QPointF pos)
             return c;
     }
 
-    qInfo() << "did not find chunk for" << pos;
-    qFatal("exiting");
+    // did not find chunk
+    return nullptr;
 }
 
 bool ChunkHandler::tryAdd(EnergyPearl p)
