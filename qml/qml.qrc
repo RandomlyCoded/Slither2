@@ -7,5 +7,6 @@
         <file>Arrow.qml</file>
         <file>Minimap.qml</file>
         <file>LeaderboardView.qml</file>
+        <file>ChunkView.qml</file>
     </qresource>
 </RCC>

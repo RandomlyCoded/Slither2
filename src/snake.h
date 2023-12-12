@@ -19,6 +19,7 @@ class Playground;
 class Snake : public QObject
 {
     Q_OBJECT
+
     Q_PROPERTY(QList<QPointF> segments READ segments NOTIFY segmentsChanged FINAL)
     Q_PROPERTY(QPointF lastSegment READ lastSegment NOTIFY segmentsChanged FINAL)
     Q_PROPERTY(QPointF position READ position NOTIFY positionChanged FINAL)

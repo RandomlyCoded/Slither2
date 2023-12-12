@@ -55,13 +55,17 @@ void DataListModel<T>::reset(QList<T> rows)
 template<class T>
 void DataListModel<T>::add(T t)
 {
+    beginInsertRows(index(rowCount()), rowCount(), rowCount());
     m_rows.append(t);
+    endInsertRows();
 }
 
 template<class T>
 void DataListModel<T>::remove(QModelIndex at)
 {
+    beginRemoveRows(at, at.row(), at.row() + 1);
     m_rows.removeAt(at.row());
+    endRemoveRows();
 }
 
 template<class T>

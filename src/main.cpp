@@ -5,6 +5,7 @@
 #include "playground.h"
 #include "snake.h"
 #include "leaderboard.h"
+#include "chunk.h"
 
 #include <QDateTime>
 #include <QGuiApplication>
@@ -32,6 +33,8 @@ int Application::run()
     setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
     qmlRegisterUncreatableType<Slither::EnergyPearl>("Slither", 1, 0, "energyPerl", "This is a value type");
+
+    qmlRegisterType<Slither::Chunk>("Slither", 1, 0, "Chunk");
     qmlRegisterType<Slither::Snake>("Slither", 1, 0, "Snake");
 
     Slither::Playground *playground = new Slither::Playground(this);

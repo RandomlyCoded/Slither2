@@ -16,7 +16,7 @@ Item {
         height: parent.height
         ShapePath {
             strokeWidth: currentSnake.size * zoom * 2
-            strokeColor: currentSnake.boosting ? "white" : "black"
+            strokeColor: currentSnake.boosting ? "#80ffffff" : "#80000000"
             fillColor: "transparent"
 
             startX: currentSnake.position.x * zoom

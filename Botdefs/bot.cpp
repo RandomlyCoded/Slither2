@@ -39,20 +39,22 @@ Snake *Bot::snake()
 
 EnergyPearl Bot::findNextFood()
 {
-    auto energyPearls = playground()->energyPearls();
-    qreal dist = qInf();
-    auto pearl = energyPearls->at(0);
+//    auto energyPearls = playground()->energyPearls();
+//    qreal dist = qInf();
+//    auto pearl = energyPearls->at(0);
 
-    for(int i = 0; i < energyPearls->rowCount(); i++) {
-        if(QVector2D(energyPearls->at(i).position - position()).length() < dist) {
-            pearl = energyPearls->at(i);
-            dist = QVector2D(energyPearls->at(i).position - position()).length();
-        }
-    }
+//    for(int i = 0; i < energyPearls->rowCount(); i++) {
+//        if(QVector2D(energyPearls->at(i).position - position()).length() < dist) {
+//            pearl = energyPearls->at(i);
+//            dist = QVector2D(energyPearls->at(i).position - position()).length();
+//        }
+//    }
 
-//    qInfo() << pearl.position << position();
+////    qInfo() << pearl.position << position();
 
-    return pearl;
+//    return pearl;
+
+    return EnergyPearl {};
 }
 
 QPointF Bot::findNextSnakeSegment()

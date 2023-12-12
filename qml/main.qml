@@ -48,12 +48,34 @@ Window {
 
         Rectangle {
             id: middle
+
             width: 4
             height: 4
             radius: 2
+
             color: "black"
+
             x: parent.width/2
             y: parent.height/2
+            z: 100
+
+            Rectangle {
+                color: "green"
+
+                width: main.width
+                height: 4
+
+                x: -main.width/2
+            }
+
+            Rectangle {
+                color: "blue"
+
+                height: main.height
+                width: 4
+
+                y: -main.height/2
+            }
         }
 
         readonly property point center: Qt.point(width/2, height/2)
@@ -95,28 +117,17 @@ Window {
         }
 
         Repeater {
-            id: pearlView
+            id: chunkDisplay
 
-            Connections {
-                target: Playground
-
-                function onEnergyPearlsChanged() {
-                    
-                }
-            }
-
-            model: Playground.energyPearls
-
-            Rectangle {
-                readonly property var pearl: model.data
+            model: Playground.chunks
 
                 color: pearl.color
                 radius: zoom * pearl.amount
                 width: radius * 2
                 height: radius * 2
 
-                x: playgroundView.center.x + zoom * pearl.position.x - width/2
-                y: playgroundView.center.y + zoom * pearl.position.y - height/2
+            ChunkView {
+                chunk: modelData
             }
         }
     }

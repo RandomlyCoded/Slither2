@@ -4,6 +4,7 @@
 
 #include "snake.h"
 #include "leaderboard.h"
+#include "chunk.h"
 
 #include <QRandomGenerator>
 #include <QVector2D>
@@ -41,6 +42,7 @@ Playground::Playground(qreal size, QObject *parent)
     : QObject(parent)
     , m_snakes({})
     , m_leaderboard(new Leaderboard(this))
+    , m_chunkHandler(new ChunkHandler{this})
 {}
 
 bool Playground::checkCrash(Snake *toCheck)
@@ -132,7 +134,7 @@ qreal Playground::consumeNearbyPearls(QPointF position, const Snake* eater)
         return 0;
     }
 
-    return m_chunkHandler->findChunk(position).consumeNearbyPearls(eater);
+    return m_chunkHandler->findChunk(position)->consumeNearbyPearls(eater);
 }
 
 void Playground::addSnake(Snake *snake)
@@ -211,12 +213,12 @@ EnergyPearl Playground::createPearl(QPointF position, qreal amount, QColor color
 
 void Playground::addPearl(const EnergyPearl &p)
 {
-    m_chunkHandler->findChunk(p.position).maybeAddPearl(p);
+    m_chunkHandler->findChunk(p.position)->maybeAddPearl(p);
 }
 
 void Playground::energyBoost()
 {
-    const auto pearlAmount = m_maximumEnergy; //m_energyPearls->rowCount();
+    const auto pearlAmount = countEnergyPearls();
 
     const auto toSpawn = m_maximumEnergy - pearlAmount;
 
@@ -228,11 +230,21 @@ void Playground::energyBoost()
 
 void Playground::initializeChunkGrid()
 {
-    const int chunkAmt = qCeil(m_size / Chunk::ChunkSize) + 1;
+    const int chunkAmt = qCeil(m_size / Chunk::ChunkSize);
 
     qInfo() << "initializing" << chunkAmt << "chunks";
 
     m_chunkHandler->init(chunkAmt);
+}
+
+int Playground::countEnergyPearls()
+{
+    int count = 0;
+
+    for(const auto c: m_chunkHandler->chunks())
+        count += c->energyPearls()->rowCount();
+
+    return count;
 }
 
 void Playground::tick(qreal dt)
@@ -260,7 +272,8 @@ void Playground::tick(qreal dt)
     leaderboard()->reload();
     emit leaderboardChanged();
 
-    m_chunkHandler->updateBufferedPearls();
+//    m_chunkHandler->updateBufferedPearls();
+    emit chunksUpdated();
 
     auto end = clock.now();
     std::chrono::nanoseconds _diff = (end - start);
@@ -280,8 +293,19 @@ qreal Playground::previousMspt() const
     return m_lastMspt;
 }
 
+QList<Chunk *> &Playground::chunks() const
+{
+    return m_chunkHandler->chunks();
+}
+
+int Playground::chunksPerRow() const
+{
+    return m_chunkHandler->chunks().size();
+}
+
 } // namespace Slither
 
+#include "chunk.h"
 #include "leaderboard.h"
 #include "leaderboard.h"
 #include "moc_playground.cpp"

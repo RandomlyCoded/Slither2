@@ -1,10 +1,11 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
+#include "playground.h"
+
 #include <QList>
 #include <QObject>
 #include <QPoint>
-
 
 namespace Slither
 {
@@ -18,6 +19,9 @@ class Snake;
 class Chunk : public QObject
 {
     Q_OBJECT
+
+    Q_PROPERTY(QPoint coords READ coords CONSTANT FINAL)
+    Q_PROPERTY(EnergyPearlListModel *energyPearls READ energyPearls NOTIFY energyPearlsChanged FINAL)
 
 public:
     explicit Chunk(QPoint coords);
@@ -34,13 +38,19 @@ public:
     bool checkY(const qreal y) const;
     bool checkX(const qreal x) const;
 
-    constexpr static int ChunkSize = 16;
-
     QPoint coords() const
     { return m_coords; }
 
     EnergyPearlListModel *energyPearls() const
     { return m_energyPearls; }
+
+    constexpr static int ChunkSize = 16;
+
+public slots:
+    int chunkSize() const { return ChunkSize; }
+
+signals:
+    void energyPearlsChanged();
 
 private:
     QPoint m_coords;
@@ -59,26 +69,24 @@ public:
     void init(int chunksEachDir);
 
     auto &chunks() { return m_chunks; }
-    Chunk &findChunk(QPointF pos);
+    Chunk *findChunk(QPointF pos);
 
     bool tryAdd(EnergyPearl p);
     bool tryAdd(Snake *s);
 
-    EnergyPearlListModel *bufferedPearls() { return m_bufferedPearls; }
-    void updateBufferedPearls();
-
 private:
     void reset();
 
-    QList<QList<Chunk>> m_chunks;
+    QList<Chunk *> m_chunks;
 
     Playground *m_playground;
 
     int offset;
-
-    EnergyPearlListModel *m_bufferedPearls;
+    int chunksPerRow;
 };
 
 } // namespace Slither
+
+Q_DECLARE_METATYPE(QList<Slither::Chunk *>)
 
 #endif // CHUNK_H

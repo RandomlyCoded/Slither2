@@ -38,7 +38,7 @@ private slots:
 
         qInfo() << point << chunkPos;
 
-        QCOMPARE(handler->findChunk(point).coords(), chunkPos);
+        QCOMPARE(handler->findChunk(point)->coords(), chunkPos);
     }
 };
 

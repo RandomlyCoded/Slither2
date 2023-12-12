@@ -16,6 +16,8 @@ namespace Slither {
 class Bot;
 class Snake;
 class Leaderboard;
+class ChunkHandler;
+class Chunk;
 
 namespace Tests
 {
@@ -58,7 +60,7 @@ class Playground : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(qreal size READ size NOTIFY sizeChanged FINAL)
-    Q_PROPERTY(Slither::EnergyPearlListModel *energyPearls READ energyPearls NOTIFY energyPearlsChanged FINAL)
+//    Q_PROPERTY(Slither::EnergyPearlListModel *energyPearls READ energyPearls NOTIFY energyPearlsChanged FINAL)
     Q_PROPERTY(QList<Slither::Snake *> snakes READ snakes NOTIFY snakesChanged FINAL)
 
     Q_PROPERTY(int snakeCount READ snakeCount NOTIFY snakesChanged FINAL)
@@ -69,12 +71,14 @@ class Playground : public QObject
 
     Q_PROPERTY(qreal previousMspt READ previousMspt NOTIFY previousMsptChanged FINAL)
 
+    Q_PROPERTY(QList<Chunk *> chunks READ chunks NOTIFY chunksUpdated FINAL)
+    Q_PROPERTY(int chunksPerRow READ chunksPerRow FINAL)
+
 public:
     Playground(QObject *parent = nullptr);
 
     qreal size() const noexcept { return m_size; }
 
-    EnergyPearlListModel *energyPearls() const { return m_chunkHandler->bufferedPearls(); }
     QList<Snake*> snakes() const { return m_snakes; };
 
     bool checkCrash(Snake *toCheck);
@@ -91,6 +95,10 @@ public:
     Leaderboard *leaderboard() const;
 
     qreal previousMspt() const;
+
+    QList<Chunk *> &chunks() const;
+
+    int chunksPerRow() const;
 
 public slots:
     void initialize(qreal size);
@@ -136,10 +144,14 @@ signals:
 
     void previousMsptChanged();
 
+    void chunksUpdated();
+
 private:
     void energyBoost();
     void initializeChunkGrid();
     void setSize(qreal newSize) { m_size = newSize; }
+
+    int countEnergyPearls();
 
     Playground(qreal size, QObject *parent = nullptr);
 
@@ -151,7 +163,7 @@ private:
 
     QPointer<Leaderboard> m_leaderboard;
     QList<Snake*> m_snakes;
-    ChunkHandler *const m_chunkHandler = new ChunkHandler{this};
+    ChunkHandler *const m_chunkHandler;
 
     int m_maximumEnergy;
     int m_maxSnakeAmt = 12; // 1 for debug, normally 12 works fine
