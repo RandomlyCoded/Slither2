@@ -121,11 +121,6 @@ Window {
 
             model: Playground.chunks
 
-                color: pearl.color
-                radius: zoom * pearl.amount
-                width: radius * 2
-                height: radius * 2
-
             ChunkView {
                 chunk: modelData
             }
