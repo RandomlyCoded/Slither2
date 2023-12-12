@@ -39,6 +39,8 @@ Snake *Bot::snake()
 
 EnergyPearl Bot::findNextFood()
 {
+    Q_UNIMPLEMENTED();
+
 //    auto energyPearls = playground()->energyPearls();
 //    qreal dist = qInf();
 //    auto pearl = energyPearls->at(0);
@@ -49,8 +51,6 @@ EnergyPearl Bot::findNextFood()
 //            dist = QVector2D(energyPearls->at(i).position - position()).length();
 //        }
 //    }
-
-////    qInfo() << pearl.position << position();
 
 //    return pearl;
 
