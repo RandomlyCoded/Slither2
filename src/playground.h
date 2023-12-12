@@ -3,7 +3,7 @@
 
 #include "leaderboard.h"
 #include "datamodel.h"
-#include "chunk.h"
+#include "snake.h"
 
 #include <QAbstractListModel>
 #include <QColor>

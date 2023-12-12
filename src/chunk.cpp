@@ -1,7 +1,6 @@
 #include "chunk.h"
 
 #include "snake.h"
-#include "playground.h"
 
 namespace Slither {
 
