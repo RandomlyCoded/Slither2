@@ -272,8 +272,7 @@ void Playground::tick(qreal dt)
     leaderboard()->reload();
     emit leaderboardChanged();
 
-//    m_chunkHandler->updateBufferedPearls();
-    emit chunksUpdated();
+   emit chunksUpdated();
 
     auto end = clock.now();
     std::chrono::nanoseconds _diff = (end - start);

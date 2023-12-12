@@ -123,8 +123,6 @@ void NeuralNet::mutate(qreal mr)
         int idx = QRandomGenerator::global()->bounded(10);
         bool bias = QRandomGenerator::global()->bounded(1); // 0 or 1
 
-//        qInfo() << "mutating" << layer << idx;
-
         qreal off = actualWeights[layer](bias ? 10 : 0, idx) + rng() * mr;
 
         if(off < -2)
@@ -197,7 +195,6 @@ QList<qreal> NeuralNet::decide(QList<qreal> input)
 
 void NeuralNet::crossover(NeuralNet *other, qreal w)
 {
-    qInfo() << "cossover";
     for(int i = 0; i < actualWeights.size(); ++i) {
         actualWeights[i] = other->weights()[i] * w + actualWeights[i] * (1 - w);
     }

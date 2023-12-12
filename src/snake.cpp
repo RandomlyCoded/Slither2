@@ -50,7 +50,6 @@ void Snake::setSize(int size)
 
 void Snake::setBotType(BotType type)
 {
-    qInfo() << Q_FUNC_INFO << type;
     delete m_bot;
     switch(type) {
     case BotType::Bot_Stupid:

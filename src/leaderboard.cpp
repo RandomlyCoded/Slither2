@@ -40,25 +40,11 @@ void Leaderboard::setLeaderSnakes()
 {
     QList<Snake *> possibleSnakes = m_playground->snakes();
 
-/*    qInfo() << "before std::sort:";
-    for(auto &sn: possibleSnakes)
-        qInfo() << "\t" << sn << sn->lengthInfo();
-    qInfo() << "\n";
-*/ // debug stuff, actually not needed anymore
-
     std::sort(possibleSnakes.begin(), possibleSnakes.end(), compSnakes); // sort the snakes using compSnakes.
-
-/*
-    qInfo() << "after std::sort:";
-    for(auto &sn: possibleSnakes)
-        qInfo() << "\t" << sn << sn->lengthInfo();
-    qInfo() << "\n";
-*/ // debug stuff.
 
     m_leaderSnakes = {};
     for(int i = 0; i < qMin(possibleSnakes.size(), 10); i++) {
         m_leaderSnakes.append(possibleSnakes[i]);
-//        qInfo().nospace() << "SNAKE #" << i << ": " << m_leaderSnakes[i]->lengthInfo() << " " << m_leaderSnakes[i]->name();
     }
 
     emit leaderboardChanged();

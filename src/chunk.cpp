@@ -74,7 +74,6 @@ qreal Chunk::consumeNearbyPearls(const Snake *sn)
         newPearls.append(std::move(pearl));
     }
 
-    qInfo() << newPearls.size();
     m_energyPearls->reset(std::move(newPearls));
 
 //    emit energyPearlsChanged();
